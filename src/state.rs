@@ -2,7 +2,10 @@ use dioxus::prelude::*;
 use uuid::Uuid;
 
 use habit_slot::economy;
-use habit_slot::models::{CoinBalance, Completion, Habit, PityCounter, RewardPool, StreakData};
+use habit_slot::models::{
+    CoinBalance, Completion, Habit, PityCounter, RewardPool, SpinResult, StreakData,
+};
+use habit_slot::slot;
 use habit_slot::streaks;
 
 /// Top-level application state held in a Dioxus signal.
@@ -12,6 +15,7 @@ pub struct AppState {
     pub completions: Vec<Completion>,
     pub coin_balance: CoinBalance,
     pub pity_counter: PityCounter,
+    pub last_spin_result: Option<SpinResult>,
 }
 
 impl Default for AppState {
@@ -21,6 +25,7 @@ impl Default for AppState {
             completions: vec![],
             coin_balance: CoinBalance::default(),
             pity_counter: PityCounter::default(),
+            last_spin_result: None,
         }
     }
 }
@@ -88,6 +93,34 @@ impl AppState {
     /// Spend coins for a slot spin bet. Returns true if successful.
     pub fn spend_coins(&mut self, amount: u32, note: String) -> bool {
         economy::spend(&mut self.coin_balance, amount, note)
+    }
+
+    /// Credit coins to balance after winning spin.
+    pub fn credit_coins(&mut self, amount: u32, note: String) {
+        economy::earn(&mut self.coin_balance, amount, note);
+    }
+
+    /// Execute a slot spin with integrated pity tracking and economy.
+    /// Deducts bet, resolves spin, credits winnings. Returns the SpinResult.
+    pub fn execute_spin(&mut self, bet: u32) -> Option<SpinResult> {
+        if !economy::spend(&mut self.coin_balance, bet, format!("Bet {} coins", bet)) {
+            return None;
+        }
+
+        let mut losses = self.pity_counter.consecutive_losses;
+        let result = slot::spin_with_state(&mut losses, bet);
+        self.pity_counter.consecutive_losses = losses;
+
+        if result.payout_coins > 0 {
+            economy::earn(
+                &mut self.coin_balance,
+                result.payout_coins,
+                format!("Slot win: {:?}", result.symbols_matched.map(|(s, _)| s)),
+            );
+        }
+
+        self.last_spin_result = Some(result.clone());
+        self.last_spin_result.clone()
     }
 }
 

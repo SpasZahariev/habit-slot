@@ -1,7 +1,7 @@
 mod components;
 mod state;
 
-use crate::components::{HabitForm, HabitList};
+use crate::components::{HabitForm, HabitList, SlotMachine};
 use crate::state::use_app_state;
 use dioxus::prelude::*;
 
@@ -32,6 +32,7 @@ fn App() -> Element {
 
             HabitForm {}
             HabitList {}
+            SlotMachine {}
         }
     }
 }
