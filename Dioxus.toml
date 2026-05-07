@@ -1,0 +1,3 @@
+[application]
+name = "habit-slot"
+default_platform = "android" # Options: "web", "desktop", "android", "ios"

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["launch","launch_cfg","launch_virtual_dom"]};

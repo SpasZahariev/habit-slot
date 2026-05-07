@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["run"],"mod":["cfg","dom","eval","event","file_engine","hot_reload","launch","mutations"],"struct":["Config"],"trait":["WebEventExt","WebFileEngineExt"]};

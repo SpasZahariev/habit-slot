@@ -1,9 +1,0 @@
-(function() {
-    const implementors = Object.fromEntries([["dioxus_interpreter_js",[["impl <a class=\"trait\" href=\"wasm_bindgen/convert/traits/trait.VectorFromWasmAbi.html\" title=\"trait wasm_bindgen::convert::traits::VectorFromWasmAbi\">VectorFromWasmAbi</a> for <a class=\"struct\" href=\"dioxus_interpreter_js/eval/struct.JSOwner.html\" title=\"struct dioxus_interpreter_js::eval::JSOwner\">JSOwner</a>",0]]],["wasm_bindgen",[]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":59,"fragment_lengths":[356,20]}

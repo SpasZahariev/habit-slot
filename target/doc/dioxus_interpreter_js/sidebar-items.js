@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["eval","minimal_bindings","unified_bindings"],"static":["INTERPRETER_JS","NATIVE_JS"]};

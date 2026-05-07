@@ -62,7 +62,7 @@ A casino-themed mobile app where completing habits earns "soul coins." Soul coin
 
 ### Architecture
 
-- `dioxus-web` as rendering backend with eventual Capacitor wrapper for native distribution
+- Dioxus compiling to native Android and iOS apps via its built-in platform WebView targets — no Capacitor or third-party wrapper needed
 - Mobile-first, portrait-only layout
 - Module-separated structure: `src/components/`, `src/slot/`, `src/economy/`, `src/streaks/`, `src/rewards/`, `src/db.rs`, `src/state.rs`, `src/models.rs`
 - `wasm-sqlite` for client-side persistence — no server required
@@ -119,7 +119,7 @@ No existing tests in codebase — this is greenfield. All 5 modules will have te
 
 ## Out of Scope
 
-- Capacitor wrapper for native app distribution (MVP is web-only)
+- PWA or standalone browser distribution
 - User accounts, cloud sync, or multiplayer features
 - Custom symbol art — placeholder pixel art sufficient for MVP
 - Near-miss programming deep polish (basic implementation only)

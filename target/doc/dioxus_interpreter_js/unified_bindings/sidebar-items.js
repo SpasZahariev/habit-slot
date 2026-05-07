@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["SLEDGEHAMMER_JS"],"struct":["BaseInterpreter","Interpreter","RawInterpreter"]};

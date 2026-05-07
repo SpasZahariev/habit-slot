@@ -15,7 +15,7 @@ fn main() {
 fn App() -> Element {
     rsx! {
         div {
-            h1 { "Habit Slot" }
+            h1 { "Spas Slot" }
         }
     }
 }
