@@ -16,3 +16,12 @@
 - 7 tests all pass: symbol distribution, tier mapping, payout scaling, 10k-spin validation
 - Made dioxus optional dep so lib tests run without GTK deps on NixOS
 - Created `src/lib.rs` for library target separation from binary/UI code
+
+## Issue #4: Habit creation and list display ✓ DONE
+
+- HabitForm component: text input + submit button, validates non-empty trimmed name
+- HabitList component: displays habits with name, creation date (YYYY-MM-DD), delete button
+- Empty state message when no habits exist
+- AppState manages Vec<Habit> via Dioxus signals (use_app_state)
+- add_habit() assigns UUID v4, current date, default RewardPool
+- remove_habit() filters by UUID
