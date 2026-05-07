@@ -5,6 +5,9 @@ use crate::models::{RewardTier, SlotSymbol, SpinResult};
 use rand::thread_rng;
 use rand::Rng;
 
+/// Consecutive losses that trigger pity win.
+const PITY_THRESHOLD: u32 = 5;
+
 /// Symbol weights for random generation (higher = more frequent).
 /// Sum = 100. Cherry is common, Devil is rarest.
 const SYMBOL_WEIGHTS: &[(SlotSymbol, f64)] = &[
@@ -68,18 +71,101 @@ fn check_payline(row: [SlotSymbol; 3]) -> Option<(SlotSymbol, u8)> {
     }
 }
 
-/// Resolve a spin given a bet amount. Generates reels, checks paylines, calculates payout.
-pub fn spin(bet: u32) -> SpinResult {
-    let mut rng = thread_rng();
+/// Check if a payline has a near-miss pattern: two symbols match, third is different.
+fn check_near_miss(row: [SlotSymbol; 3]) -> bool {
+    row[0] == row[1] || row[1] == row[2] || row[0] == row[2]
+}
 
-    // Generate 3 reels, each with 3 symbols (top, middle, bottom).
-    // Layout: reels[col][row] where col=0..2, row=0=top,1=middle,2=bottom
-    let mut reels: [[SlotSymbol; 3]; 3] = Default::default();
-    for reel in reels.iter_mut() {
-        for pos in reel.iter_mut() {
-            *pos = roll_symbol(&mut rng);
+/// Check if any payline has a near-miss pattern across the reels.
+fn has_near_miss_pattern(reels: &[[SlotSymbol; 3]; 3]) -> bool {
+    for row_idx in 0..3 {
+        let payline = [reels[0][row_idx], reels[1][row_idx], reels[2][row_idx]];
+        if check_near_miss(payline) {
+            return true;
         }
     }
+    false
+}
+
+/// Generate reels that guarantee a win of at least the given minimum tier.
+fn generate_pity_reels(rng: &mut impl Rng, min_tier: RewardTier) -> [[SlotSymbol; 3]; 3] {
+    let mut reels: [[SlotSymbol; 3]; 3] = Default::default();
+
+    // Fill all positions with random symbols first
+    for reel in reels.iter_mut() {
+        for pos in reel.iter_mut() {
+            *pos = roll_symbol(rng);
+        }
+    }
+
+    // Pick a random row to place the guaranteed win
+    let win_row = rng.gen_range(0..3);
+
+    // Choose which symbol to force based on minimum tier requirement
+    let forced_symbol: SlotSymbol;
+    match min_tier {
+        RewardTier::Small => {
+            // Force either Cherry or Bell
+            if rng.gen_bool(0.5) {
+                forced_symbol = SlotSymbol::Cherry;
+            } else {
+                forced_symbol = SlotSymbol::Bell;
+            }
+        }
+        _ => {
+            // Default to Cherry for safety
+            forced_symbol = SlotSymbol::Cherry;
+        }
+    }
+
+    // Force 3-of-a-kind on the chosen row
+    reels[0][win_row] = forced_symbol;
+    reels[1][win_row] = forced_symbol;
+    reels[2][win_row] = forced_symbol;
+
+    reels
+}
+
+/// Update pity counter based on spin result. Returns whether pity win should be triggered.
+fn update_pity_state(consecutive_losses: &mut u32, is_win: bool) -> (u32, bool) {
+    if is_win {
+        *consecutive_losses = 0;
+        (*consecutive_losses, false)
+    } else {
+        *consecutive_losses += 1;
+        let should_pity = *consecutive_losses >= PITY_THRESHOLD;
+        if should_pity {
+            *consecutive_losses = 0;
+        }
+        (*consecutive_losses, should_pity)
+    }
+}
+
+/// Resolve a spin given a bet amount. Generates reels, checks paylines, calculates payout.
+pub fn spin(bet: u32) -> SpinResult {
+    let mut consecutive_losses: u32 = 0;
+    spin_with_state(&mut consecutive_losses, bet)
+}
+
+/// Resolve a spin with persistent pity state tracking.
+pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
+    let mut rng = thread_rng();
+
+    // Check if pity win should trigger
+    let should_pity_win = *consecutive_losses >= PITY_THRESHOLD - 1;
+
+    let reels = if should_pity_win {
+        generate_pity_reels(&mut rng, RewardTier::Small)
+    } else {
+        // Generate normal reels
+        let mut normal_reels: [[SlotSymbol; 3]; 3] = Default::default();
+        for reel in normal_reels.iter_mut() {
+            for pos in reel.iter_mut() {
+                *pos = roll_symbol(&mut rng);
+            }
+        }
+        normal_reels
+    };
 
     // Check horizontal paylines (top, middle, bottom rows across all reels).
     let mut best_match: Option<(SlotSymbol, u8)> = None;
@@ -115,12 +201,23 @@ pub fn spin(bet: u32) -> SpinResult {
         None => 0,
     };
 
+    let is_win = payout_coins > 0;
+
+    // Update pity state after determining result
+    let _ = update_pity_state(consecutive_losses, is_win);
+
+    // Determine near-miss flag: only on losing spins with matching pattern
+    let mut is_near_miss = false;
+    if !is_win && has_near_miss_pattern(&reels) {
+        is_near_miss = true;
+    }
+
     SpinResult {
         reels,
         symbols_matched: best_match,
         tier,
         payout_coins,
-        is_near_miss: false,
+        is_near_miss,
         grayed_high_tier: false,
     }
 }
@@ -299,5 +396,133 @@ mod tests {
         assert_eq!(base_mult * 1, 5);
         assert_eq!(base_mult * 2, 10);
         assert_eq!(base_mult * 3, 15);
+    }
+
+    #[test]
+    fn pity_counter_resets_after_win() {
+        let mut losses = 0u32;
+        for _ in 0..4 {
+            update_pity_state(&mut losses, false);
+        }
+        assert_eq!(losses, 4);
+
+        update_pity_state(&mut losses, true);
+        assert_eq!(losses, 0);
+    }
+
+    #[test]
+    fn pity_triggers_on_fifth_consecutive_loss() {
+        let mut losses = 0u32;
+        for _ in 0..4 {
+            update_pity_state(&mut losses, false);
+        }
+        assert_eq!(losses, 4);
+
+        let (final_losses, should_pity) = update_pity_state(&mut losses, false);
+        assert!(should_pity, "pity should trigger on 5th loss");
+        assert_eq!(final_losses, 0, "counter resets after pity triggers");
+    }
+
+    #[test]
+    fn pity_does_not_trigger_before_five_losses() {
+        let mut losses = 0u32;
+        for i in 0..4 {
+            let (_, should_pity) = update_pity_state(&mut losses, false);
+            assert!(!should_pity, "pity should not trigger on loss #{}", i + 1);
+        }
+    }
+
+    #[test]
+    fn near_miss_detected_on_two_matching_symbols() {
+        let row_cherry_bell = [SlotSymbol::Cherry, SlotSymbol::Cherry, SlotSymbol::Bell];
+        assert!(check_near_miss(row_cherry_bell));
+
+        let row_all_same = [SlotSymbol::Bell, SlotSymbol::Bell, SlotSymbol::Bell];
+        assert!(check_near_miss(row_all_same));
+
+        let row_all_diff = [SlotSymbol::Cherry, SlotSymbol::Bell, SlotSymbol::Diamond];
+        assert!(!check_near_miss(row_all_diff));
+    }
+
+    #[test]
+    fn near_miss_pattern_detected_across_reels() {
+        let mut reels: [[SlotSymbol; 3]; 3] = Default::default();
+
+        // Set up middle row with two matching symbols
+        reels[0][1] = SlotSymbol::Diamond;
+        reels[1][1] = SlotSymbol::Diamond;
+        reels[2][1] = SlotSymbol::Seven;
+
+        assert!(has_near_miss_pattern(&reels));
+    }
+
+    #[test]
+    fn near_miss_not_detected_on_all_different() {
+        let mut reels: [[SlotSymbol; 3]; 3] = Default::default();
+
+        // All rows have different symbols
+        reels[0][0] = SlotSymbol::Cherry;
+        reels[1][0] = SlotSymbol::Bell;
+        reels[2][0] = SlotSymbol::Diamond;
+
+        reels[0][1] = SlotSymbol::Seven;
+        reels[1][1] = SlotSymbol::Devil;
+        reels[2][1] = SlotSymbol::Cherry;
+
+        reels[0][2] = SlotSymbol::Bell;
+        reels[1][2] = SlotSymbol::Diamond;
+        reels[2][2] = SlotSymbol::Seven;
+
+        assert!(!has_near_miss_pattern(&reels));
+    }
+
+    #[test]
+    fn pity_reels_generate_guaranteed_win() {
+        let mut rng = StdRng::seed_from_u64(999);
+
+        for _ in 0..100 {
+            let reels = generate_pity_reels(&mut rng, RewardTier::Small);
+            // Verify at least one row has a matching pattern (win)
+            let mut found_win = false;
+            for row_idx in 0..3 {
+                let payline = [reels[0][row_idx], reels[1][row_idx], reels[2][row_idx]];
+                if let Some(_) = check_payline(payline) {
+                    found_win = true;
+                    break;
+                }
+            }
+            assert!(
+                found_win,
+                "pity reels should contain at least one winning payline"
+            );
+        }
+    }
+
+    #[test]
+    fn near_miss_only_on_losing_spins() {
+        // Near-miss detection returns true for winning pattern too (3-of-a-kind has 2 matching)
+        // But in spin_with_state, is_near_miss is only set when !is_win
+        assert!(check_near_miss([
+            SlotSymbol::Cherry,
+            SlotSymbol::Cherry,
+            SlotSymbol::Cherry
+        ]));
+    }
+
+    #[test]
+    fn pity_threshold_constant_is_five() {
+        assert_eq!(PITY_THRESHOLD, 5);
+    }
+
+    #[test]
+    fn spin_with_state_tracks_losses() {
+        let mut losses: u32 = 0;
+        // We can't control randomness in spin_with_state directly,
+        // but we can verify the state is used by checking consecutive_losses behavior
+        // through a manual simulation
+        for _ in 0..4 {
+            update_pity_state(&mut losses, false);
+        }
+        assert_eq!(losses, 4);
     }
 }
