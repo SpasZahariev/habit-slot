@@ -25,3 +25,14 @@
 - AppState manages Vec<Habit> via Dioxus signals (use_app_state)
 - add_habit() assigns UUID v4, current date, default RewardPool
 - remove_habit() filters by UUID
+
+## Issue #5: Habit completion tracking with streaks and coin earning ✓ DONE
+
+- StreakCalculator (`src/streaks/mod.rs`): consecutive day counting, hard reset on missed days, max streak tracking
+- CalendarColor enum with hex values for heatmap intensity mapping (1-3=Low, 4-9=Mid, 10+=High)
+- Coin Economy (`src/economy/mod.rs`): balance tracking, earn/spend operations, immutable transaction log
+- Streak bonus: +1 bonus coin per 7 consecutive days streak
+- AppState integration: `toggle_completion()` records completion + awards coins via economy::on_complete()
+- Habit list UI shows completion toggle ("Do it" / "Done") with visual state, streak count per habit
+- Coin balance displayed prominently in main.rs (top of app)
+- 15 tests across streaks (8) and economy (7): all pass
