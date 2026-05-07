@@ -2,8 +2,9 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SlotSymbol {
+    #[default]
     Cherry,
     Bell,
     Diamond,
