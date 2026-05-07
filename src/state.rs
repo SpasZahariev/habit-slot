@@ -2,9 +2,9 @@
 //! Dioxus signal-based state for the habit slot application.
 
 use dioxus::prelude::*;
-use std::rc::Rc;
+use uuid::Uuid;
 
-use crate::models::{Habit, Transaction};
+use habit_slot::models::{Habit, RewardPool, Transaction};
 
 /// Soul coin balance tracked as a signed value to allow auditability.
 #[derive(Clone, Default)]
@@ -22,18 +22,34 @@ pub struct PityCounter {
 /// Top-level application state held in a Dioxus signal.
 #[derive(Clone)]
 pub struct AppState {
-    pub habits: Rc<Vec<Habit>>,
-    pub coin_balance: Rc<CoinBalance>,
+    pub habits: Vec<Habit>,
+    pub coin_balance: CoinBalance,
     pub pity_counter: PityCounter,
 }
 
 impl Default for AppState {
     fn default() -> Self {
         Self {
-            habits: Rc::new(vec![]),
-            coin_balance: Rc::new(CoinBalance::default()),
+            habits: vec![],
+            coin_balance: CoinBalance::default(),
             pity_counter: PityCounter::default(),
         }
+    }
+}
+
+impl AppState {
+    pub fn add_habit(&mut self, name: String) {
+        let habit = Habit {
+            id: Uuid::new_v4(),
+            name,
+            created_at: chrono::Utc::now().naive_utc().date(),
+            reward_pool: RewardPool::default(),
+        };
+        self.habits.push(habit);
+    }
+
+    pub fn remove_habit(&mut self, id: Uuid) {
+        self.habits.retain(|h| h.id != id);
     }
 }
 

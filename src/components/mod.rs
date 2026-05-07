@@ -1,2 +1,5 @@
-//! UI components module
-//! Dioxus components for the habit slot application.
+mod habit_form;
+mod habit_list;
+
+pub use habit_form::HabitForm;
+pub use habit_list::HabitList;

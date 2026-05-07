@@ -1,10 +1,18 @@
-## Issue #2: Project scaffolding and compile baseline
+## Issue #2: Project scaffolding and compile baseline ✓ DONE
 
 - Fixed Dioxus launch pattern in `src/main.rs` (`dioxus::web::launch` → `launch` from prelude)
 - `cargo check` now passes with no errors (only dead code warnings on stub modules)
 - Added `.gitignore` to exclude `target/`
-
-### Remaining for issue #2
-- All module stubs registered but empty: slot, economy, streaks, rewards, components
+- All module stubs registered: slot, economy, streaks, rewards, components ✓
 - state.rs has basic signal infrastructure ✓
 - models.rs has all key types ✓
+
+## Issue #3: Core slot engine and probability table ✓ DONE
+
+- Implemented `spin(bet) -> SpinResult` with configurable symbol probability weights
+- 3-of-a-kind payline matching across top/middle/bottom rows (reels[col][row] layout)
+- Payout scales linearly with bet: Cherry=2x, Bell=5x, Diamond=10x, Seven=25x, Devil=50x
+- RewardTier mapping: Small (Cherry/Bell), Medium (Diamond/Seven), Jackpot (Devil)
+- 7 tests all pass: symbol distribution, tier mapping, payout scaling, 10k-spin validation
+- Made dioxus optional dep so lib tests run without GTK deps on NixOS
+- Created `src/lib.rs` for library target separation from binary/UI code
