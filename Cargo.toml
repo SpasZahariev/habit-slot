@@ -9,16 +9,14 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
-dioxus = { version = "=0.7.5", features = ["mobile"], optional = true }
+dioxus = { version = "=0.7.5", features = ["mobile"] }
 
 [features]
 default = []
-ui = ["dioxus"]
 
 [[bin]]
 name = "habit-slot"
 path = "src/main.rs"
-required-features = ["ui"]
 
 [lib]
 name = "habit_slot"

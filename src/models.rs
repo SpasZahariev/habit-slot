@@ -20,7 +20,7 @@ pub enum RewardTier {
     Jackpot,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Habit {
     pub id: Uuid,
     pub name: String,
@@ -28,7 +28,7 @@ pub struct Habit {
     pub reward_pool: RewardPool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RewardPool {
     pub small_rewards: Vec<String>,
     pub medium_rewards: Vec<String>,
@@ -68,7 +68,7 @@ pub struct Completion {
     pub date: NaiveDate,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TransactionKind {
     Earn(u32),
     Spend(u32),
@@ -81,6 +81,17 @@ pub struct Transaction {
     pub amount: i64,
     pub balance_after: i64,
     pub note: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct CoinBalance {
+    pub balance: i64,
+    pub transactions: Vec<Transaction>,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PityCounter {
+    pub consecutive_losses: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
