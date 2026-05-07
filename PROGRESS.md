@@ -46,3 +46,15 @@
 - `is_near_miss` flag set only on losing spins with near-miss pattern (no impact on payout)
 - PITY_THRESHOLD constant = 5 configurable at module level
 - 11 new tests: pity trigger on 5th loss, reset after win, near-miss detection patterns, guaranteed pity wins
+
+## Issue #7: Slot UI with bet selection and reel animation ✓ DONE
+
+- `SlotMachine` component in `src/components/slot_machine.rs`
+- BetSelector: 3-button toggle for 1/2/3 coin bets
+- Reels display: 3x3 grid showing slot symbols (emoji: 🍒🔔💎7️⃣😈) from SpinResult
+- SPIN button: calls `AppState.execute_spin(bet)` — deducts bet, resolves spin with pity tracking, credits winnings
+- Button disabled when balance insufficient for selected bet
+- Result display shows win amount ("Win! +N coins"), near-miss ("So close..."), or loss feedback
+- `AppState.execute_spin()`: integrated method chaining spend → spin_with_state → earn winnings
+- `AppState.last_spin_result` tracks latest outcome for reactive UI updates
+- Coin balance updates in real-time (reflected in existing coin balance display)
