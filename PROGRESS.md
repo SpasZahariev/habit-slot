@@ -36,3 +36,13 @@
 - Habit list UI shows completion toggle ("Do it" / "Done") with visual state, streak count per habit
 - Coin balance displayed prominently in main.rs (top of app)
 - 15 tests across streaks (8) and economy (7): all pass
+
+## Issue #6: Pity mechanic and near-miss programming ✓ DONE
+
+- Pity mechanic: hidden loss counter increments on each losing spin, resets on any win
+- On 5th consecutive loss, next spin guaranteed to land at least Small tier reward via `generate_pity_reels()`
+- `spin_with_state(&mut consecutive_losses, bet)` for persistent pity tracking across spins
+- Near-miss detection: `has_near_miss_pattern()` checks all paylines for 2+ matching symbols
+- `is_near_miss` flag set only on losing spins with near-miss pattern (no impact on payout)
+- PITY_THRESHOLD constant = 5 configurable at module level
+- 11 new tests: pity trigger on 5th loss, reset after win, near-miss detection patterns, guaranteed pity wins
