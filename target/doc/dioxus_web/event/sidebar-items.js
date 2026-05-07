@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["downcast_event","get_form_data","get_select_data","load_document","virtual_event_from_websys_event"],"struct":["GenericWebSysEvent","WebDragData","WebEventConverter","WebFormData","WebImageEvent"],"trait":["WebEventExt"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["walk_event_for_id"],"struct":["UiEvent","WebsysDom"]};

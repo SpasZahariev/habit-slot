@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["NATIVE_EVAL_JS"],"struct":["JSOwner","WeakDioxusChannel","WebDioxusChannel"]};
