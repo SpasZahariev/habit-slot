@@ -1,0 +1,15 @@
+[package]
+name = "habit-slot"
+version = "0.1.0"
+edition = "2021"
+description = "Casino-themed habit tracker with slot machine rewards"
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+rand = "0.8"
+serde = { version = "1", features = ["derive"] }
+dioxus = { version = "0.5", features = ["web"] }
+
+[dev-dependencies]
+rstest = "0.21"
