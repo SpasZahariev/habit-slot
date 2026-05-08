@@ -58,3 +58,14 @@
 - `AppState.execute_spin()`: integrated method chaining spend → spin_with_state → earn winnings
 - `AppState.last_spin_result` tracks latest outcome for reactive UI updates
 - Coin balance updates in real-time (reflected in existing coin balance display)
+
+## Issue #8: Calendar heatmap per habit ✓ DONE
+
+- `CalendarHeatmap` component (`src/components/calendar_heatmap.rs`) with monthly grid view
+- Month navigation (previous/next buttons) with year rollover handling
+- Day cells colored by streak intensity at that point: Empty (gray), Low 1-3 (blue), Mid 4-9 (red), High 10+ (gold)
+- Today highlighted with gold border in calendar grid
+- Legend showing color mapping below the grid
+- Expandable per habit via "Calendar"/"Hide" toggle button in HabitItem
+- Uses existing `streaks::calendar_color()` function for per-day streak computation
+- No new tests needed — relies on existing streaks test coverage for calendar_color logic
