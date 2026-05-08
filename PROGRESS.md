@@ -81,3 +81,13 @@
 - AppState integration: `toggle_completion()` checks milestones after each completion, awards bonus coins (Small=5, Medium=10, Jackpot=25)
 - UI display: HabitItem shows "Streak: X/Y | Tasks: A/B" progress line beneath habit name
 - 11 new tests all pass: claim-once, tier advancement, empty pool, reward selection, tier mapping, format_progress
+
+## Issue #11: Grayed-out high-tier symbols on low bets ✓ DONE
+
+- `MAX_BET` constant (3) in `src/slot/mod.rs` — defines the threshold for full-color payouts
+- `grayed_high_tier` flag on `SpinResult`: true when matched symbol is high-tier (Diamond+, tier order >= 2) AND bet < MAX_BET
+- Reduced payout formula: `round(payout * bet/MAX_BET)` — proportional reduction creates FOMO at lower bets
+- At max bet (3 coins): all symbols display full color with full multiplier, no graying applied
+- `resolve_reels()` helper for testing grayed behavior with controlled reel data
+- SlotMachine UI: winning cells rendered with CSS `grayscale(100%) brightness(50%)` when `grayed_high_tier` is true, plus "(Bet more for full payout)" hint text
+- 5 new tests all pass (49 total): grayed at bet 1, grayed at bet 2, no gray at bet 3, low-tier not grayed, only matching symbols affected
