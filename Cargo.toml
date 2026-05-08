@@ -10,9 +10,11 @@ uuid = { version = "1", features = ["v4", "serde"] }
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 dioxus = { version = "=0.7.5", features = ["mobile"], optional = true }
+rusqlite = { version = "0.39", features = ["bundled"], optional = true }
 
 [features]
 default = []
+db = ["dep:rusqlite"]
 
 [[bin]]
 name = "habit-slot"

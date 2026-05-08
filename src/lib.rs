@@ -1,3 +1,5 @@
+#[cfg(feature = "db")]
+pub mod db;
 pub mod economy;
 pub mod models;
 pub mod rewards;
