@@ -69,3 +69,15 @@
 - Expandable per habit via "Calendar"/"Hide" toggle button in HabitItem
 - Uses existing `streaks::calendar_color()` function for per-day streak computation
 - No new tests needed — relies on existing streaks test coverage for calendar_color logic
+
+## Issue #9: Milestone tracking with claim-once rewards ✓ DONE
+
+- `MilestoneTracker` in `src/rewards/mod.rs`: tracks claimed streak and completion tiers per habit via HashSet<usize>
+- Two milestone tracks: STREAK_MILESTONES (7, 14, 30, 60, 90 days) and COMPLETION_MILESTONES (10, 25, 50, 100, 200 completions)
+- `check_milestones()` returns newly claimed milestone + next active goals for both tracks
+- Claim-once semantics: each tier index inserted into HashSet on claim, prevents duplicate rewards
+- After claim, next tier automatically becomes the active goal via `next_streak_goal`/`next_completion_goal`
+- `select_reward()`: random selection from appropriate RewardPool tier; returns None for empty pools
+- AppState integration: `toggle_completion()` checks milestones after each completion, awards bonus coins (Small=5, Medium=10, Jackpot=25)
+- UI display: HabitItem shows "Streak: X/Y | Tasks: A/B" progress line beneath habit name
+- 11 new tests all pass: claim-once, tier advancement, empty pool, reward selection, tier mapping, format_progress
