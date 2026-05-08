@@ -61,6 +61,19 @@ pub fn HabitItem(habit: Habit, expanded_calendars: Signal<HashMap<Uuid, bool>>) 
         map.insert(habit.id, !is_expanded);
     };
 
+    let milestone_progress = app_state.read().get_milestone_progress(habit.id);
+    let streak_goal_text = format!(
+        "Streak: {}/{},
+        streak,
+        milestone_progress.next_streak_goal.0
+    );
+    let total_completions = app_state.read().completions.iter().filter(|c| c.habit_id == habit.id).count();
+    let completion_goal_text = format!(
+        "Tasks: {}/{}",
+        total_completions,
+        milestone_progress.next_completion_goal.0
+    );
+
     rsx! {
         li {
             class: "habit-item",
@@ -79,6 +92,12 @@ pub fn HabitItem(habit: Habit, expanded_calendars: Signal<HashMap<Uuid, bool>>) 
                         class: "habit-date",
                         style: "font-size: 0.85rem; opacity: 0.5;",
                         "Created {format_date(&habit.created_at)}"
+                    }
+                    br {}
+                    span {
+                        class: "milestone-progress",
+                        style: "font-size: 0.75rem; color: #aaa; margin-top: 4px;",
+                        "{streak_goal_text} | {completion_goal_text}"
                     }
                 }
 
