@@ -105,5 +105,14 @@
 - Migration upgrade path: version comparison at startup, auto-updates if behind
 - 9 new tests (58 total with --features db): schema creation, habit CRUD, completion CRUD, coin balance persistence, transaction immutability, close/reopen persistence, milestone tracker CRUD, pity counter CRUD, migration version
 
-### Remaining
-- AppState wiring: load from DB on init + write-through on mutations
+### AppState Wiring ✓ Done
+- `AppState.from_db(&Db) -> Option<Self>`: loads habits, completions, coin balance (from transactions), pity counter, milestone trackers
+- `AppState.with_db(Rc<Db>) -> Self`: attaches shared DB reference for write-through
+- All mutations persist to DB when `db` feature enabled:
+  - `add_habit()` → `db.insert_habit()` + auto-creates milestone row
+  - `remove_habit()` → `db.delete_habit()` (cascades completions + milestones)
+  - `toggle_completion()` → `db.insert_completion()` / `db.delete_completion()` + persists new transactions + saves milestone tracker
+  - `execute_spin()` → persists bet + win transactions + saves pity counter
+- `use_app_state_with_db(Rc<Db>) -> Signal<AppState>`: Dioxus hook for DB-backed initialization
+- Graceful degradation: all DB calls wrapped with `let _ = ...` — failures are logged silently, app stays functional without DB
+- Both `cargo check` (no feature) and `cargo test --features db` (58 tests) pass
