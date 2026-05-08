@@ -1,6 +1,6 @@
 use crate::state::AppState;
 use dioxus::prelude::*;
-use habit_slot::models::SlotSymbol;
+use habit_slot::models::{SlotSymbol, SpinResult};
 
 #[component]
 pub fn SlotMachine() -> Element {
@@ -23,7 +23,7 @@ pub fn SlotMachine() -> Element {
 
             BetSelector { bet: &mut bet }
 
-            Reels { spin_result: last_result.clone() }
+            Reels { spin_result: &last_result }
 
             div {
                 style: "display: flex; justify-content: center; margin-top: 16px;",
@@ -47,7 +47,7 @@ pub fn SlotMachine() -> Element {
                 }
             }
 
-            SpinResult { spin_result: &last_result }
+            SpinResultDisplay { spin_result: &last_result }
         }
     }
 }
@@ -76,7 +76,7 @@ fn BetSelector(bet: &Signal<u32>) -> Element {
 }
 
 #[component]
-fn Reels(spin_result: Option<habit_slot::models::SpinResult>) -> Element {
+fn Reels(spin_result: &Option<SpinResult>) -> Element {
     let default_reels: [[SlotSymbol; 3]; 3] = [
         [SlotSymbol::Cherry, SlotSymbol::Bell, SlotSymbol::Diamond],
         [SlotSymbol::Seven, SlotSymbol::Cherry, SlotSymbol::Devil],
@@ -93,23 +93,56 @@ fn Reels(spin_result: Option<habit_slot::models::SpinResult>) -> Element {
             class: "reels-container",
             style: "display: flex; justify-content: center; gap: 8px; padding: 16px; background: #1a1a2e; border-radius: 8px;",
             for col in 0..3 {
-                ReelColumn { col, reels: &reels }
+                ReelColumn { col, reels: &reels, spin_result }
             }
         }
     }
 }
 
 #[component]
-fn ReelColumn(col: usize, reels: &[[SlotSymbol; 3]; 3]) -> Element {
+fn ReelColumn(
+    col: usize,
+    reels: &[[SlotSymbol; 3]; 3],
+    spin_result: &Option<SpinResult>,
+) -> Element {
+    let is_grayed = spin_result
+        .as_ref()
+        .map(|r| r.grayed_high_tier)
+        .unwrap_or(false);
+
+    // Determine which row contains the winning symbols (if any)
+    let winning_row = spin_result.as_ref().and_then(|r| {
+        if let Some((matched_symbol, _)) = r.symbols_matched {
+            for row in 0..3 {
+                if reels[0][row] == matched_symbol
+                    && reels[1][row] == matched_symbol
+                    && reels[2][row] == matched_symbol
+                {
+                    return Some(row);
+                }
+            }
+        }
+        None
+    });
+
     rsx! {
         div {
             class: "reel-column",
             style: "display: flex; flex-direction: column; gap: 4px;",
             for row in 0..3 {
+                let symbol = &reels[col][row];
+                let is_winning_cell = winning_row == Some(row);
+
+                let cell_style = if is_grayed && is_winning_cell {
+                    "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #16213e; border-radius: 6px; font-size: 2rem; filter: grayscale(100%) brightness(50%); opacity: 0.5;"
+                } else {
+                    "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #16213e; border-radius: 6px; font-size: 2rem;"
+                };
+
                 div {
                     class: "reel-symbol",
-                    style: "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #16213e; border-radius: 6px; font-size: 2rem;",
-                    "{symbol_to_emoji(&reels[col][row])}"
+                    style: cell_style,
+                    "{symbol_to_emoji(symbol)}"
                 }
             }
         }
@@ -117,7 +150,7 @@ fn ReelColumn(col: usize, reels: &[[SlotSymbol; 3]; 3]) -> Element {
 }
 
 #[component]
-fn SpinResult(spin_result: &Option<habit_slot::models::SpinResult>) -> Element {
+fn SpinResultDisplay(spin_result: &Option<SpinResult>) -> Element {
     rsx! {
         div {
             class: "spin-result",
@@ -128,6 +161,12 @@ fn SpinResult(spin_result: &Option<habit_slot::models::SpinResult>) -> Element {
                         p {
                             style: "color: #f5c518; font-size: 1.3rem; font-weight: bold;",
                             "Win! +{r.payout_coins} coins"
+                        }
+                        if r.grayed_high_tier {
+                            p {
+                                style: "color: #888; font-size: 0.85rem; margin-top: 4px;",
+                                "(Bet more for full payout)"
+                            }
                         }
                     }
                 } else if r.is_near_miss {
