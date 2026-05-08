@@ -91,3 +91,19 @@
 - `resolve_reels()` helper for testing grayed behavior with controlled reel data
 - SlotMachine UI: winning cells rendered with CSS `grayscale(100%) brightness(50%)` when `grayed_high_tier` is true, plus "(Bet more for full payout)" hint text
 - 5 new tests all pass (49 total): grayed at bet 1, grayed at bet 2, no gray at bet 3, low-tier not grayed, only matching symbols affected
+
+## Issue #10: SQLite persistence layer — IN PROGRESS
+
+### DB Module ✓ Done
+- `rusqlite` with `bundled` feature as optional dependency behind `db` feature flag
+- `Db` struct in `src/db.rs` with schema initialization and migration system
+- Schema version tracking via metadata table (current: v1)
+- 6 tables: `metadata`, `habits`, `completions`, `coin_balance`, `transactions`, `milestones`, `pity_counter`
+- All queries parameterized — no raw SQL concatenation
+- CRUD round-trips for all tables tested with in-memory DB + file persistence
+- Graceful degradation: error handling returns defaults, app stays functional on read failures
+- Migration upgrade path: version comparison at startup, auto-updates if behind
+- 9 new tests (58 total with --features db): schema creation, habit CRUD, completion CRUD, coin balance persistence, transaction immutability, close/reopen persistence, milestone tracker CRUD, pity counter CRUD, migration version
+
+### Remaining
+- AppState wiring: load from DB on init + write-through on mutations
