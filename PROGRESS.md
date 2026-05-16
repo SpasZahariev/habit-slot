@@ -187,3 +187,19 @@
 - `use_app_state_with_db(Rc<Db>) -> Signal<AppState>`: Dioxus hook for DB-backed initialization
 - Graceful degradation: all DB calls wrapped with `let _ = ...` — failures are logged silently, app stays functional without DB
 - Both `cargo check` (no feature) and `cargo test --features db` (58 tests) pass
+
+## Issue #29: Reel spin animation with staggered timing ✓ DONE
+
+- `SpinAnimationStrip` pure-function in `src/slot/mod.rs`: `generate_animation_strip()` produces ~12 weighted random filler symbols + 3 result symbols per reel column
+- `generate_all_animation_strips(&SpinResult)` generates all 3 strips for a spin result, final 3 symbols match SpinResult reel column exactly
+- Filler symbol distribution follows `SYMBOL_WEIGHTS` probability within tolerance
+- AppState: added `is_spinning`, `animation_strips: Option<[Vec<SlotSymbol>; 3]>`, `reels_stopped: u8` fields
+- AppState methods: `prepare_animation()`, `stop_one_reel()`, `reset_animation()`
+- `execute_spin()` now calls `prepare_animation()` before revealing result
+- AnimatedReelColumn component: renders full strip vertically with overflow:hidden viewport showing 3 cells
+- CSS `translateY` transition scrolls reel content vertically; motion blur (`blur(2px)`) during spin, removed on stop
+- Staggered stop timing via Dioxus `Timer::after_millis`: reel 1 at 1000ms, reel 2 at 1600ms, reel 3 at 2200ms
+- Reel 3 has extra ease-out duration (`cubic-bezier(0.15, 0.85, 0.35, 1.0)`) for dramatic slow snap landing
+- `slot_styles.css` with `.ease-out-slow` class for final reel transition
+- SPIN button disabled during spin animation to prevent overlapping spins
+- 9 new tests (74 total): strip length, final symbols match result, filler distribution, all strips production, symbol matching
