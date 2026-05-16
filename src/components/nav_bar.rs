@@ -15,9 +15,9 @@ pub fn NavBar() -> Element {
 
     rsx! {
         div {
-            class: "flex items-start gap-3 mb-6 pb-3 border-b border-[#ff2d78]/30",
+            class: "flex items-start gap-4 w-full mb-6 pb-3 border-b border-[#ff2d78]/30",
             button {
-                class: "text-4xl font-bold text-[#ff2d78] cursor-pointer bg-none border-none p-1 leading-none",
+                class: "text-5xl font-bold text-[#ff2d78] cursor-pointer bg-none border-none p-0 leading-none self-start",
                 onclick: move |_| {
                     app_state.with_mut(|state| state.go_home());
                 },
