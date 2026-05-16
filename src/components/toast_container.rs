@@ -5,7 +5,7 @@ use std::time::Duration;
 
 #[component]
 pub fn ToastContainer() -> Element {
-    let app_state = use_context::<Signal<AppState>>();
+    let mut app_state = use_context::<Signal<AppState>>();
     let mut task_running = use_signal(|| false);
 
     if !*task_running.read() {
