@@ -5,10 +5,9 @@ use habit_slot::models::{SlotSymbol, SpinResult};
 #[component]
 pub fn SlotMachine() -> Element {
     let mut app_state = use_context::<Signal<AppState>>();
-    let bet = use_signal(|| 1u32);
 
     let balance = app_state.read().coin_balance.balance;
-    let can_spin = balance >= bet() as i64;
+    let can_spin = balance >= 1;
     let last_result = app_state.read().last_spin_result.clone();
 
     rsx! {
@@ -20,8 +19,6 @@ pub fn SlotMachine() -> Element {
                 "Slot Machine"
             }
 
-            BetSelector { bet: bet.clone() }
-
             Reels { spin_result: last_result.clone() }
 
             div {
@@ -31,10 +28,7 @@ pub fn SlotMachine() -> Element {
                     disabled: !can_spin,
                     onclick: move |_| {
                         app_state.with_mut(|state| {
-                            let b = *bet.read();
-                            if b > 0 {
-                                let _ = state.execute_spin(b);
-                            }
+                            let _ = state.execute_spin(1);
                         });
                     },
                     "SPIN"
@@ -42,24 +36,6 @@ pub fn SlotMachine() -> Element {
             }
 
             SpinResultDisplay { spin_result: last_result }
-        }
-    }
-}
-
-#[component]
-fn BetSelector(bet: Signal<u32>) -> Element {
-    rsx! {
-        div {
-            class: "bet-selector flex justify-center gap-2 mb-4",
-              for amount in [1, 2, 3] {
-                  button {
-                    onclick: move |_| {
-                        *bet.write() = amount;
-                    },
-                    class: format!("rounded-md cursor-pointer font-bold px-5 py-2 {}", if *bet.read() == amount { "bg-[#ff2d78] text-[#f0e6ff] border-none" } else { "bg-[#2a1a4e] text-[#00f5d4] border border-[#ff2d78]" }),
-                    "{coin_label(amount)}"
-                }
-            }
         }
     }
 }
@@ -177,10 +153,6 @@ fn SpinResultDisplay(spin_result: Option<SpinResult>) -> Element {
 struct ReelCell {
     cell_class: &'static str,
     emoji: String,
-}
-
-fn coin_label(amount: u32) -> String {
-    format!("{} coin{}", amount, if amount > 1 { "s" } else { "" })
 }
 
 fn symbol_to_emoji(symbol: &SlotSymbol) -> &'static str {
