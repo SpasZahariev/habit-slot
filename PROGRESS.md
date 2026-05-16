@@ -203,3 +203,15 @@
 - `slot_styles.css` with `.ease-out-slow` class for final reel transition
 - SPIN button disabled during spin animation to prevent overlapping spins
 - 9 new tests (74 total): strip length, final symbols match result, filler distribution, all strips production, symbol matching
+
+## Issue #30: Lever slider replaces SPIN button ✓ DONE
+
+- `LeverSlider` component (`src/components/lever_slider.rs`): pill-shaped drag lever with state machine Idle → Dragging → Triggered → Resetting → Idle
+- Pill-shaped track (180x40px) with circular knob, vaporwave styling (pink gradient, cyan fill indicator, dark purple background)
+- Full drag to far right edge (≥0.85 threshold) triggers spin on pointer up (commitment gesture)
+- Knob springs back immediately after triggering with ~800ms CSS ease-in transition
+- `is_disabled` prop dims lever (opacity 0.4) during reel animation, blocks all pointer interaction
+- Touch and mouse pointer events handled via `onpointerdown`/`onpointermove`/`onpointerup`/`onpointercancel`
+- SPIN button removed from SlotMachine, replaced with LeverSlider wired into `execute_spin(1)` flow
+- `components/mod.rs` exports `LeverSlider`
+- All 74 tests pass (`cargo test --features db`)
