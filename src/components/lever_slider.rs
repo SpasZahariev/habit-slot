@@ -137,7 +137,7 @@ pub fn LeverSlider(on_trigger: Callback<()>, is_disabled: bool) -> Element {
                 style: format!("width: calc(var(--knob-pos) * 100%);"),
             }
 
-            div { class: "lever-label", "PULL" }
+            div { class: "lever-label", "DRAG" }
 
             // Knob is its own component — only this re-renders on every pointer move
             LeverKnob { knob_pos, is_dragging, resetting }
@@ -174,18 +174,7 @@ fn LeverKnob(knob_pos: Signal<f64>, is_dragging: Signal<bool>, resetting: Signal
                 transform: translate(calc(var(--knob-pos) * 224px), -50%);
             }}
 
-            .lever-knob::after {{
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 24px;
-                height: 6px;
-                border-radius: 3px;
-                background: rgba(255, 255, 255, 0.35);
-                transform: translate(-50%, -50%);
-            }}
-        "# }
+         "# }
 
         div {
             class: "lever-knob",

@@ -8,10 +8,11 @@ use habit_slot::sprites::symbol_sprite_uri;
 pub fn SlotMachine() -> Element {
     let mut app_state = use_context::<Signal<AppState>>();
 
-    let last_result = app_state.read().last_spin_result.clone();
+           let last_result = app_state.read().last_spin_result.clone();
     let is_spinning = app_state.read().is_spinning;
     let animation_strips = app_state.read().animation_strips.clone();
     let reels_stopped = app_state.read().reels_stopped;
+    let coin_balance = app_state.read().coin_balance.balance;
 
     if is_spinning && reels_stopped == 0 {
         let mut state_clone = use_context::<Signal<AppState>>().clone();
@@ -117,7 +118,7 @@ pub fn SlotMachine() -> Element {
             div {
                 class: "flex justify-center mt-4",
                 LeverSlider {
-                    is_disabled: is_spinning,
+                    is_disabled: is_spinning || coin_balance < 1,
                     on_trigger: Callback::new(move |_| {
                         app_state.with_mut(|state| {
                             let _ = state.execute_spin(1);
