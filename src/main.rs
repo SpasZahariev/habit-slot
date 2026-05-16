@@ -24,7 +24,7 @@ fn App() -> Element {
         style { "{TAILWIND_CSS}" }
 
         div {
-            class: "flex flex-col min-h-[100dvh] w-full overflow-x-hidden px-4 py-3 font-['Pixelify_Sans'] bg-gradient-to-b from-[#1a0a2e] to-[#2d1b69] text-[#f0e6ff]",
+            class: "flex flex-col min-h-full-vh w-full overflow-x-hidden px-4 py-3 font-['Pixelify_Sans'] bg-gradient-to-b from-[#1a0a2e] to-[#2d1b69] text-[#f0e6ff]",
 
             if current_page != Page::Home {
                 NavBar {}

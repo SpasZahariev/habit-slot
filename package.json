@@ -1,0 +1,27 @@
+{
+  "name": "habit-slot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "tailwind.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SpasZahariev/habit-slot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SpasZahariev/habit-slot/issues"
+  },
+  "homepage": "https://github.com/SpasZahariev/habit-slot#readme",
+  "dependencies": {
+    "tailwindcss": "^3.4.3"
+  }
+}
