@@ -140,6 +140,19 @@
 - SlotMachine UI: winning cells rendered with CSS `grayscale(100%) brightness(50%)` when `grayed_high_tier` is true, plus "(Bet more for full payout)" hint text
 - 5 new tests all pass (49 total): grayed at bet 1, grayed at bet 2, no gray at bet 3, low-tier not grayed, only matching symbols affected
 
+## Issue #27: Slice 1: Sprite symbols on reels + coin footer + remove title ✓ DONE
+
+- SpriteRegistry struct in `src/sprites.rs`: maps all 6 SlotSymbol variants to static asset paths (`/Foods/*.png`) and display names
+- Kebab→low1.png, Taco→low2.png, Pizza→low3.png, Sushi→med1.png, Sashimi→med2.png, Pancake→high1.png
+- Replaced base64 embedded strings with asset server paths served by Dioxus from `static/Foods/`
+- Removed 6 unused `*_base64.txt` files (kebab, taco, pizza, sushi, sashimi, pancake)
+- SlotMachine component already renders `<img>` tags at ~28x24px with sprite URIs
+- Default reels use valid food symbols (Kebab/Taco/Pizza/Sushi/Sashimi/Pancake)
+- CoinFooterBar: fixed bottom bar with pancake coin icon + reactive balance display
+- "Slot Machine" h2 title not present in current component
+- 6 new SpriteRegistry tests all pass (64 total): valid paths, correct names, no duplicates, file mapping, coin icon
+- Symbol weights bug fix: corrected `SYMBOL_WEIGHTS` to sum to 100 (Pancake 4→10), fixing probability_distribution_kebab test
+
 ## Issue #10: SQLite persistence layer — IN PROGRESS
 
 ### DB Module ✓ Done
