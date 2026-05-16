@@ -207,11 +207,11 @@ fn ReelColumnAnimated(
 #[component]
 fn ReelSymbolCell(symbol: SlotSymbol, is_winning: bool, is_grayed: bool) -> Element {
     let cell_class = if is_grayed && is_winning {
-        "w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50"
+        "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50"
     } else if is_winning {
-        "w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]"
+        "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]"
     } else {
-        "w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md"
+        "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md"
     };
 
     rsx! {
@@ -278,11 +278,11 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         .map(|row| {
             let is_winning_cell = winning_row == Some(row);
             let cell_class = if is_grayed && is_winning_cell {
-                "w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50".to_string()
+                "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50".to_string()
             } else if is_winning_cell {
-                "w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]".to_string()
+                "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]".to_string()
             } else {
-                "w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md".to_string()
+                "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md".to_string()
             };
             ReelCellData {
                 uri: symbol_sprite_uri(&reels[col][row]),
@@ -293,7 +293,7 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
 
     rsx! {
         div {
-            class: "reel-column flex flex-col",
+            class: "reel-column-viewport",
             for cell in cells {
                 div {
                     class: cell.cell_class,
