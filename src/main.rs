@@ -9,7 +9,7 @@ fn main() {
     launch(App);
 }
 
-const GLOBAL_CSS: &str = "html,body{margin:0!important;padding:0!important;overflow:hidden!important;width:100%;height:100%}@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap');body{font-family:'Pixelify Sans',sans-serif!important}*{box-sizing:border-box}";
+const GLOBAL_CSS: &str = "html,body{margin:0!important;padding:0!important;overflow:hidden!important;width:100%;height:100%}body{font-family:'Pixelify Sans',sans-serif!important}*{box-sizing:border-box}";
 
 fn App() -> Element {
     let app_state = use_app_state();
@@ -17,6 +17,7 @@ fn App() -> Element {
     provide_context(app_state.clone());
 
     rsx! {
+        Stylesheet { integrity: "", href: "https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" }
         style { content: GLOBAL_CSS }
 
         div {
