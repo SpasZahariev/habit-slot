@@ -13,9 +13,20 @@ use habit_slot::rewards::{self, MilestoneTracker};
 use habit_slot::slot;
 use habit_slot::streaks;
 
+/// Page navigation enum for simple signal-based routing.
+#[derive(Clone, Copy, Default, PartialEq, Eq)]
+pub enum Page {
+    #[default]
+    Home,
+    SlotMachine,
+    Habits,
+    CreateHabit,
+}
+
 /// Top-level application state held in a Dioxus signal.
 #[derive(Clone)]
 pub struct AppState {
+    pub current_page: Page,
     pub habits: Vec<Habit>,
     pub completions: Vec<Completion>,
     pub coin_balance: CoinBalance,
@@ -30,6 +41,7 @@ pub struct AppState {
 impl Default for AppState {
     fn default() -> Self {
         Self {
+            current_page: Page::default(),
             habits: vec![],
             completions: vec![],
             coin_balance: CoinBalance::default(),
@@ -59,6 +71,7 @@ impl AppState {
         }
 
         Some(Self {
+            current_page: Page::default(),
             habits,
             completions,
             coin_balance,
@@ -229,6 +242,16 @@ impl AppState {
             .count() as u32;
 
         rewards::check_milestones(&mut tracker, streak.current_streak_days, total_completions)
+    }
+
+    /// Navigate to a page.
+    pub fn navigate(&mut self, page: Page) {
+        self.current_page = page;
+    }
+
+    /// Navigate back to home.
+    pub fn go_home(&mut self) {
+        self.current_page = Page::Home;
     }
 
     /// Check if a habit is completed today.
