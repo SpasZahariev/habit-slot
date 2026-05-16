@@ -150,12 +150,10 @@ pub fn LeverSlider(on_trigger: Callback<()>, is_disabled: bool) -> Element {
 
 /// Isolated knob component — only this re-renders during drag.
 #[component]
-fn LeverKnob(
-    knob_pos: Signal<f64>,
-    is_dragging: Signal<bool>,
-    resetting: Signal<bool>,
-) -> Element {
-    use_effect(move || { _ = (knob_pos, is_dragging, resetting); });
+fn LeverKnob(knob_pos: Signal<f64>, is_dragging: Signal<bool>, resetting: Signal<bool>) -> Element {
+    use_effect(move || {
+        _ = (knob_pos, is_dragging, resetting);
+    });
 
     let pos = *knob_pos.read();
     let dragging = *is_dragging.read();

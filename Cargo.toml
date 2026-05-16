@@ -13,11 +13,19 @@ dioxus = { version = "=0.7.5", features = ["mobile"], optional = true }
 dioxus-tailwindcss = { version = "0.8", optional = true }
 tokio = { version = "1", features = ["time"], optional = true }
 rusqlite = { version = "0.39", features = ["bundled"], optional = true }
+web-sys = { version = "0.3", features = [
+  "Window",
+  "Element",
+  "HtmlElement",
+  "CssStyleDeclaration",
+], optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
+js-sys = { version = "0.3", optional = true }
 
 [features]
 default = []
 db = ["dep:rusqlite"]
-dioxus = ["dep:dioxus", "dep:dioxus-tailwindcss", "dep:tokio"]
+dioxus = ["dep:dioxus", "dep:dioxus-tailwindcss", "dep:tokio", "dep:web-sys", "dep:wasm-bindgen", "dep:js-sys"]
 
 [[bin]]
 name = "habit-slot"
