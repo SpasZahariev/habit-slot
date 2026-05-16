@@ -6,6 +6,7 @@ mod habit_list;
 mod home_page;
 mod nav_bar;
 mod slot_machine;
+mod toast_container;
 
 pub use agis_animation::AgisAnimation;
 pub use calendar_heatmap::CalendarHeatmap;
@@ -15,3 +16,4 @@ pub use habit_list::HabitList;
 pub use home_page::HomePage;
 pub use nav_bar::NavBar;
 pub use slot_machine::SlotMachine;
+pub use toast_container::ToastContainer;

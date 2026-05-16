@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -120,5 +122,110 @@ impl CalendarColor {
             CalendarColor::Mid => "#ff2d78",
             CalendarColor::High => "#00f5d4",
         }
+    }
+}
+
+/// Toast notification message displayed at top-center of screen.
+#[derive(Debug, Clone)]
+pub struct ToastMessage {
+    pub symbol_name: String,
+    pub payout: u32,
+    pub created_at: Instant,
+}
+
+/// Auto-dismiss timeout for toast notifications.
+pub const TOAST_TIMEOUT_MS: u64 = 2500;
+
+/// Manages a queue of toast notifications with FIFO ordering and auto-dismiss.
+#[derive(Debug, Clone, Default)]
+pub struct ToastManager {
+    pub toasts: Vec<ToastMessage>,
+}
+
+impl ToastManager {
+    /// Push a new toast notification to the end of the queue (FIFO).
+    pub fn push(&mut self, symbol_name: String, payout: u32) {
+        self.toasts.push(ToastMessage {
+            symbol_name,
+            payout,
+            created_at: Instant::now(),
+        });
+    }
+
+    /// Remove toasts older than the configured timeout. Called each render frame.
+    pub fn dismiss_expired(&mut self) {
+        let now = Instant::now();
+        self.toasts
+            .retain(|t| now.duration_since(t.created_at) < Duration::from_millis(TOAST_TIMEOUT_MS));
+    }
+}
+
+#[cfg(test)]
+mod toast_tests {
+    use super::*;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn push_adds_entry() {
+        let mut mgr = ToastManager::default();
+        assert!(mgr.toasts.is_empty());
+
+        mgr.push("Pancake x3".to_string(), 25);
+        assert_eq!(mgr.toasts.len(), 1);
+        assert_eq!(mgr.toasts[0].symbol_name, "Pancake x3");
+        assert_eq!(mgr.toasts[0].payout, 25);
+    }
+
+    #[test]
+    fn push_fifo_ordering() {
+        let mut mgr = ToastManager::default();
+
+        mgr.push("Kebab x3".to_string(), 2);
+        mgr.push("Sushi x3".to_string(), 8);
+        mgr.push("Pancake x3".to_string(), 50);
+
+        assert_eq!(mgr.toasts.len(), 3);
+        assert_eq!(mgr.toasts[0].symbol_name, "Kebab x3");
+        assert_eq!(mgr.toasts[1].symbol_name, "Sushi x3");
+        assert_eq!(mgr.toasts[2].symbol_name, "Pancake x3");
+    }
+
+    #[test]
+    fn dismiss_expired_removes_old() {
+        let mut mgr = ToastManager::default();
+        mgr.push("Kebab x3".to_string(), 2);
+
+        let old = Instant::now().checked_sub(Duration::from_secs(10)).unwrap();
+        mgr.toasts[0].created_at = old;
+
+        mgr.dismiss_expired();
+        assert!(mgr.toasts.is_empty());
+    }
+
+    #[test]
+    fn dismiss_expired_keeps_recent() {
+        let mut mgr = ToastManager::default();
+        mgr.push("Sushi x3".to_string(), 8);
+
+        // Created just now, within timeout — should not be removed
+        mgr.dismiss_expired();
+        assert_eq!(mgr.toasts.len(), 1);
+    }
+
+    #[test]
+    fn dismiss_expired_removes_only_old() {
+        let mut mgr = ToastManager::default();
+
+        // First toast is old
+        mgr.push("Kebab x3".to_string(), 2);
+        let old = Instant::now().checked_sub(Duration::from_secs(10)).unwrap();
+        mgr.toasts[0].created_at = old;
+
+        // Second toast is recent
+        mgr.push("Pancake x3".to_string(), 50);
+
+        mgr.dismiss_expired();
+        assert_eq!(mgr.toasts.len(), 1);
+        assert_eq!(mgr.toasts[0].symbol_name, "Pancake x3");
     }
 }

@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use habit_slot::economy;
 use habit_slot::models::{
-    CoinBalance, Completion, Habit, PityCounter, RewardPool, SpinResult, StreakData,
+    CoinBalance, Completion, Habit, PityCounter, RewardPool, SpinResult, StreakData, ToastMessage,
 };
 use habit_slot::rewards::{self, MilestoneTracker};
 use habit_slot::slot;
@@ -23,6 +23,8 @@ pub enum Page {
     CreateHabit,
 }
 
+use std::time::{Duration, Instant};
+
 /// Top-level application state held in a Dioxus signal.
 #[derive(Clone)]
 pub struct AppState {
@@ -34,6 +36,8 @@ pub struct AppState {
     pub last_spin_result: Option<SpinResult>,
     /// Milestone tracker per habit.
     pub milestone_trackers: HashMap<Uuid, MilestoneTracker>,
+    /// Active toast notifications queued FIFO.
+    pub toasts: Vec<ToastMessage>,
     #[cfg(feature = "db")]
     pub db: Option<Rc<habit_slot::db::Db>>,
 }
@@ -48,6 +52,7 @@ impl Default for AppState {
             pity_counter: PityCounter::default(),
             last_spin_result: None,
             milestone_trackers: HashMap::new(),
+            toasts: vec![],
             #[cfg(feature = "db")]
             db: None,
         }
@@ -80,6 +85,7 @@ impl AppState {
             },
             last_spin_result: None,
             milestone_trackers,
+            toasts: vec![],
             db: None,
         })
     }
@@ -262,6 +268,33 @@ impl AppState {
             .any(|c| c.habit_id == habit_id && c.date == today)
     }
 
+    /// Push a new toast notification to the end of the queue (FIFO).
+    pub fn push_toast(&mut self, symbol_name: String, payout: u32) {
+        self.toasts.push(ToastMessage {
+            symbol_name,
+            payout,
+            created_at: Instant::now(),
+        });
+    }
+
+    /// Remove toasts older than the configured timeout. Called each render frame.
+    pub fn dismiss_expired_toasts(&mut self) {
+        let now = Instant::now();
+        self.toasts.retain(|t| {
+            now.duration_since(t.created_at)
+                < Duration::from_millis(habit_slot::models::TOAST_TIMEOUT_MS)
+        });
+    }
+
+    /// Remove toasts older than the configured timeout. Called each render frame.
+    pub fn dismiss_expired_toasts(&mut self) {
+        let now = Instant::now();
+        self.toasts.retain(|t| {
+            now.duration_since(t.created_at)
+                < Duration::from_millis(habit_slot::models::TOAST_TIMEOUT_MS)
+        });
+    }
+
     /// Spend coins for a slot spin bet. Returns true if successful.
     pub fn spend_coins(&mut self, amount: u32, note: String) -> bool {
         let success = economy::spend(&mut self.coin_balance, amount, note);
@@ -282,7 +315,7 @@ impl AppState {
     /// Execute a slot spin with integrated pity tracking and economy.
     /// Deducts bet, resolves spin, credits winnings. Returns the SpinResult.
     pub fn execute_spin(&mut self, bet: u32) -> Option<SpinResult> {
-        let _tx_before = self.coin_balance.transactions.len();
+        let tx_before = self.coin_balance.transactions.len();
         if !economy::spend(&mut self.coin_balance, bet, format!("Bet {} coins", bet)) {
             return None;
         }
@@ -297,6 +330,12 @@ impl AppState {
                 result.payout_coins,
                 format!("Slot win: {:?}", result.symbols_matched.map(|(s, _)| s)),
             );
+
+            // Push toast notification for winning spins
+            if let Some((symbol, count)) = result.symbols_matched {
+                let symbol_name = habit_slot::sprites::symbol_display_name(&symbol).to_string();
+                self.push_toast(format!("{} x{}", symbol_name, count), result.payout_coins);
+            }
         }
 
         #[cfg(feature = "db")]
