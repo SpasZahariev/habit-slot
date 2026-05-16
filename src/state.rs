@@ -385,7 +385,10 @@ impl AppState {
 
 /// Create a new writable signal for the app state.
 pub fn use_app_state() -> Signal<AppState> {
-    use_signal(|| AppState::default())
+    let mut s = AppState::default();
+    // TEMP: give 7 coins for testing, remove before release
+    s.coin_balance.balance = 7;
+    use_signal(move || s.clone())
 }
 
 /// Create app state backed by a SQLite database (requires `db` feature).
