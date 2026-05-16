@@ -1,6 +1,7 @@
 use crate::state::AppState;
 use dioxus::prelude::*;
 use habit_slot::models::{SlotSymbol, SpinResult};
+use habit_slot::sprites::symbol_sprite_uri;
 
 #[component]
 pub fn SlotMachine() -> Element {
@@ -13,11 +14,6 @@ pub fn SlotMachine() -> Element {
     rsx! {
         div {
             class: "slot-machine mt-8 p-4 bg-[#1a0a2e] rounded-xl border-2 border-[#ff2d78] w-[96%]",
-
-            h2 {
-                class: "text-center text-[#ff2d78] mb-4 drop-shadow-[0_0_8px_rgba(255,45,120,0.4)]",
-                "Slot Machine"
-            }
 
             Reels { spin_result: last_result.clone() }
 
@@ -43,9 +39,9 @@ pub fn SlotMachine() -> Element {
 #[component]
 fn Reels(spin_result: Option<SpinResult>) -> Element {
     let default_reels: [[SlotSymbol; 3]; 3] = [
-        [SlotSymbol::Cherry, SlotSymbol::Bell, SlotSymbol::Diamond],
-        [SlotSymbol::Seven, SlotSymbol::Cherry, SlotSymbol::Devil],
-        [SlotSymbol::Bell, SlotSymbol::Diamond, SlotSymbol::Cherry],
+        [SlotSymbol::Kebab, SlotSymbol::Taco, SlotSymbol::Pizza],
+        [SlotSymbol::Sushi, SlotSymbol::Kebab, SlotSymbol::Pancake],
+        [SlotSymbol::Taco, SlotSymbol::Sashimi, SlotSymbol::Kebab],
     ];
 
     let reels = spin_result
@@ -61,6 +57,11 @@ fn Reels(spin_result: Option<SpinResult>) -> Element {
             }
         }
     }
+}
+
+struct ReelCellData {
+    uri: &'static str,
+    cell_class: String,
 }
 
 #[component]
@@ -84,16 +85,18 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         None
     });
 
-    let cells: Vec<_> = (0..3)
+    let cells: Vec<ReelCellData> = (0..3)
         .map(|row| {
             let is_winning_cell = winning_row == Some(row);
             let cell_class = if is_grayed && is_winning_cell {
-                "min-w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md text-3xl grayscale brightness-50 opacity-50"
+                "min-w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50".to_string()
             } else {
-                "min-w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md text-3xl"
+                "min-w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md".to_string()
             };
-            let emoji = symbol_to_emoji(&reels[col][row]).to_string();
-            ReelCell { cell_class, emoji }
+            ReelCellData {
+                uri: symbol_sprite_uri(&reels[col][row]),
+                cell_class,
+            }
         })
         .collect();
 
@@ -103,7 +106,10 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
             for cell in cells {
                 div {
                     class: format!("reel-symbol {}", cell.cell_class),
-                    "{cell.emoji}"
+                    img {
+                        src: cell.uri,
+                        class: "w-[28px] h-[24px] object-contain",
+                    }
                 }
             }
         }
@@ -147,20 +153,5 @@ fn SpinResultDisplay(spin_result: Option<SpinResult>) -> Element {
                 None => rsx! {},
             }
         }
-    }
-}
-
-struct ReelCell {
-    cell_class: &'static str,
-    emoji: String,
-}
-
-fn symbol_to_emoji(symbol: &SlotSymbol) -> &'static str {
-    match symbol {
-        SlotSymbol::Cherry => "🍒",
-        SlotSymbol::Bell => "🔔",
-        SlotSymbol::Diamond => "💎",
-        SlotSymbol::Seven => "7️⃣",
-        SlotSymbol::Devil => "😈",
     }
 }
