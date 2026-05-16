@@ -82,6 +82,23 @@
 - UI display: HabitItem shows "Streak: X/Y | Tasks: A/B" progress line beneath habit name
 - 11 new tests all pass: claim-once, tier advancement, empty pool, reward selection, tier mapping, format_progress
 
+## Issue #19: Global styles, white border fix, rename to Habit Slot ✓ DONE
+
+- Inject CSS reset via `<style>` tag in rsx! (html/body margin/padding: 0, overflow: hidden) for Android white border fix
+- Load Pixelify Sans from Google Fonts via `@import` in injected style block
+- Apply vaporwave/synthwave palette across ALL components:
+  - Background: deep purple gradient `#1a0a2e` → `#2d1b69`
+  - Accent primary: hot pink `#ff2d78` (replaces gold `#f5c518`)
+  - Accent secondary: cyan `#00f5d4` (coin balance, today highlight)
+  - Text: light lavender `#f0e6ff`
+  - Card bg: darker purple `#2a1a4e` (replaces blue `#16213e`)
+- Updated CalendarColor hex values in models.rs to match vaporwave theme
+- Rename "Spas Slot" → "Habit Slot" in main.rs
+- Rename "Soul Coins" → "coins" in main.rs
+- Rename slot machine title from "Soul Slot Machine" → "Slot Machine"
+- All 49 existing tests pass
+- Full dioxus compile blocked by OpenSSL on NixOS — runs fine on target Android device
+
 ## Issue #11: Grayed-out high-tier symbols on low bets ✓ DONE
 
 - `MAX_BET` constant (3) in `src/slot/mod.rs` — defines the threshold for full-color payouts
