@@ -5,11 +5,12 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SlotSymbol {
     #[default]
-    Cherry,
-    Bell,
-    Diamond,
-    Seven,
-    Devil,
+    Kebab,
+    Taco,
+    Pizza,
+    Sushi,
+    Sashimi,
+    Pancake,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

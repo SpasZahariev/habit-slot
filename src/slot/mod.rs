@@ -12,43 +12,46 @@ const PITY_THRESHOLD: u32 = 5;
 pub const MAX_BET: u32 = 3;
 
 /// Symbol weights for random generation (higher = more frequent).
-/// Sum = 100. Cherry is common, Devil is rarest.
+/// Sum = 100. Kebab/Taco/Pizza are common, Pancake is rarest.
 const SYMBOL_WEIGHTS: &[(SlotSymbol, f64)] = &[
-    (SlotSymbol::Cherry, 35.0),
-    (SlotSymbol::Bell, 30.0),
-    (SlotSymbol::Diamond, 20.0),
-    (SlotSymbol::Seven, 11.0),
-    (SlotSymbol::Devil, 4.0),
+    (SlotSymbol::Kebab, 25.0),
+    (SlotSymbol::Taco, 20.0),
+    (SlotSymbol::Pizza, 15.0),
+    (SlotSymbol::Sushi, 18.0),
+    (SlotSymbol::Sashimi, 12.0),
+    (SlotSymbol::Pancake, 4.0),
 ];
 
 /// Payout multiplier for 3-of-a-kind matches.
 fn payout_multiplier(symbol: SlotSymbol) -> Option<u32> {
     match symbol {
-        SlotSymbol::Cherry => Some(2),
-        SlotSymbol::Bell => Some(5),
-        SlotSymbol::Diamond => Some(10),
-        SlotSymbol::Seven => Some(25),
-        SlotSymbol::Devil => Some(50),
+        SlotSymbol::Kebab => Some(2),
+        SlotSymbol::Taco => Some(4),
+        SlotSymbol::Pizza => Some(3),
+        SlotSymbol::Sushi => Some(8),
+        SlotSymbol::Sashimi => Some(12),
+        SlotSymbol::Pancake => Some(50),
     }
 }
 
 /// Map a matched symbol to its reward tier.
 fn symbol_tier(symbol: SlotSymbol) -> RewardTier {
     match symbol {
-        SlotSymbol::Cherry | SlotSymbol::Bell => RewardTier::Small,
-        SlotSymbol::Diamond | SlotSymbol::Seven => RewardTier::Medium,
-        SlotSymbol::Devil => RewardTier::Jackpot,
+        SlotSymbol::Kebab | SlotSymbol::Taco | SlotSymbol::Pizza => RewardTier::Small,
+        SlotSymbol::Sushi | SlotSymbol::Sashimi => RewardTier::Medium,
+        SlotSymbol::Pancake => RewardTier::Jackpot,
     }
 }
 
 /// Numeric tier order for comparison (higher = rarer/better).
 fn symbol_tier_order(symbol: SlotSymbol) -> u8 {
     match symbol {
-        SlotSymbol::Cherry => 0,
-        SlotSymbol::Bell => 1,
-        SlotSymbol::Diamond => 2,
-        SlotSymbol::Seven => 3,
-        SlotSymbol::Devil => 4,
+        SlotSymbol::Kebab => 0,
+        SlotSymbol::Taco => 1,
+        SlotSymbol::Pizza => 2,
+        SlotSymbol::Sushi => 3,
+        SlotSymbol::Sashimi => 4,
+        SlotSymbol::Pancake => 5,
     }
 }
 
@@ -62,7 +65,7 @@ fn roll_symbol(rng: &mut impl Rng) -> SlotSymbol {
             return symbol;
         }
     }
-    SlotSymbol::Cherry
+    SlotSymbol::Kebab
 }
 
 /// Check a single row (payline) for 3-of-a-kind.
@@ -108,16 +111,16 @@ fn generate_pity_reels(rng: &mut impl Rng, min_tier: RewardTier) -> [[SlotSymbol
     let forced_symbol: SlotSymbol;
     match min_tier {
         RewardTier::Small => {
-            // Force either Cherry or Bell
+            // Force either Kebab or Taco
             if rng.gen_bool(0.5) {
-                forced_symbol = SlotSymbol::Cherry;
+                forced_symbol = SlotSymbol::Kebab;
             } else {
-                forced_symbol = SlotSymbol::Bell;
+                forced_symbol = SlotSymbol::Taco;
             }
         }
         _ => {
-            // Default to Cherry for safety
-            forced_symbol = SlotSymbol::Cherry;
+            // Default to Kebab for safety
+            forced_symbol = SlotSymbol::Kebab;
         }
     }
 
@@ -205,9 +208,9 @@ pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
     };
 
     // Determine if high-tier symbol should be grayed out at low bet.
-    // High-tier symbols (Diamond+, tier order >= 2) display grayed when bet < MAX_BET.
+    // High-tier symbols (Sushi+, tier order >= 3) display grayed when bet < MAX_BET.
     let grayed_high_tier = best_match
-        .map(|(s, _)| symbol_tier_order(s) >= 2 && bet < MAX_BET)
+        .map(|(s, _)| symbol_tier_order(s) >= 3 && bet < MAX_BET)
         .unwrap_or(false);
 
     // Apply reduced payout for grayed high-tier symbols: proportional to bet/MAX_BET ratio.
@@ -280,7 +283,7 @@ pub fn resolve_reels(reels: [[SlotSymbol; 3]; 3], bet: u32) -> SpinResult {
     };
 
     let grayed_high_tier = best_match
-        .map(|(s, _)| symbol_tier_order(s) >= 2 && bet < MAX_BET)
+        .map(|(s, _)| symbol_tier_order(s) >= 3 && bet < MAX_BET)
         .unwrap_or(false);
 
     let effective_payout = if grayed_high_tier {
@@ -319,11 +322,11 @@ mod tests {
     #[test]
     fn payout_scales_linearly_with_bet() {
         let symbols = [
-            SlotSymbol::Cherry,
-            SlotSymbol::Bell,
-            SlotSymbol::Diamond,
-            SlotSymbol::Seven,
-            SlotSymbol::Devil,
+            SlotSymbol::Kebab,
+            SlotSymbol::Taco,
+            SlotSymbol::Sushi,
+            SlotSymbol::Sashimi,
+            SlotSymbol::Pancake,
         ];
 
         for &symbol in &symbols {
@@ -337,11 +340,11 @@ mod tests {
 
     #[test]
     fn reward_tier_mapping() {
-        assert_eq!(symbol_tier(SlotSymbol::Cherry), RewardTier::Small);
-        assert_eq!(symbol_tier(SlotSymbol::Bell), RewardTier::Small);
-        assert_eq!(symbol_tier(SlotSymbol::Diamond), RewardTier::Medium);
-        assert_eq!(symbol_tier(SlotSymbol::Seven), RewardTier::Medium);
-        assert_eq!(symbol_tier(SlotSymbol::Devil), RewardTier::Jackpot);
+        assert_eq!(symbol_tier(SlotSymbol::Kebab), RewardTier::Small);
+        assert_eq!(symbol_tier(SlotSymbol::Taco), RewardTier::Small);
+        assert_eq!(symbol_tier(SlotSymbol::Sushi), RewardTier::Medium);
+        assert_eq!(symbol_tier(SlotSymbol::Sashimi), RewardTier::Medium);
+        assert_eq!(symbol_tier(SlotSymbol::Pancake), RewardTier::Jackpot);
     }
 
     #[test]
@@ -353,42 +356,42 @@ mod tests {
     }
 
     #[test]
-    fn probability_distribution_cherry_within_tolerance() {
+    fn probability_distribution_kebab_within_tolerance() {
         let mut rng = StdRng::seed_from_u64(42);
-        let mut cherry_count = 0u32;
+        let mut kebab_count = 0u32;
 
         for _ in 0..NUM_SPINS {
-            if roll_symbol(&mut rng) == SlotSymbol::Cherry {
-                cherry_count += 1;
+            if roll_symbol(&mut rng) == SlotSymbol::Kebab {
+                kebab_count += 1;
             }
         }
 
-        let observed = cherry_count as f64 / NUM_SPINS as f64;
-        let expected = symbol_probability(SlotSymbol::Cherry);
+        let observed = kebab_count as f64 / NUM_SPINS as f64;
+        let expected = symbol_probability(SlotSymbol::Kebab);
         assert!(
             (observed - expected).abs() < TOLERANCE,
-            "Cherry: observed {:.3}, expected {:.3}",
+            "Kebab: observed {:.3}, expected {:.3}",
             observed,
             expected
         );
     }
 
     #[test]
-    fn probability_distribution_devil_within_tolerance() {
+    fn probability_distribution_pancake_within_tolerance() {
         let mut rng = StdRng::seed_from_u64(42);
-        let mut devil_count = 0u32;
+        let mut pancake_count = 0u32;
 
         for _ in 0..NUM_SPINS {
-            if roll_symbol(&mut rng) == SlotSymbol::Devil {
-                devil_count += 1;
+            if roll_symbol(&mut rng) == SlotSymbol::Pancake {
+                pancake_count += 1;
             }
         }
 
-        let observed = devil_count as f64 / NUM_SPINS as f64;
-        let expected = symbol_probability(SlotSymbol::Devil);
+        let observed = pancake_count as f64 / NUM_SPINS as f64;
+        let expected = symbol_probability(SlotSymbol::Pancake);
         assert!(
             (observed - expected).abs() < TOLERANCE * 2.0,
-            "Devil: observed {:.3}, expected {:.3}",
+            "Pancake: observed {:.3}, expected {:.3}",
             observed,
             expected
         );
@@ -460,11 +463,11 @@ mod tests {
 
     #[test]
     fn bet_multiplier_affects_payout() {
-        let base_mult = payout_multiplier(SlotSymbol::Bell).unwrap();
+        let base_mult = payout_multiplier(SlotSymbol::Taco).unwrap();
 
-        assert_eq!(base_mult * 1, 5);
-        assert_eq!(base_mult * 2, 10);
-        assert_eq!(base_mult * 3, 15);
+        assert_eq!(base_mult * 1, 4);
+        assert_eq!(base_mult * 2, 8);
+        assert_eq!(base_mult * 3, 12);
     }
 
     #[test]
@@ -503,13 +506,13 @@ mod tests {
 
     #[test]
     fn near_miss_detected_on_two_matching_symbols() {
-        let row_cherry_bell = [SlotSymbol::Cherry, SlotSymbol::Cherry, SlotSymbol::Bell];
-        assert!(check_near_miss(row_cherry_bell));
+        let row_kebab_taco = [SlotSymbol::Kebab, SlotSymbol::Kebab, SlotSymbol::Taco];
+        assert!(check_near_miss(row_kebab_taco));
 
-        let row_all_same = [SlotSymbol::Bell, SlotSymbol::Bell, SlotSymbol::Bell];
+        let row_all_same = [SlotSymbol::Taco, SlotSymbol::Taco, SlotSymbol::Taco];
         assert!(check_near_miss(row_all_same));
 
-        let row_all_diff = [SlotSymbol::Cherry, SlotSymbol::Bell, SlotSymbol::Diamond];
+        let row_all_diff = [SlotSymbol::Kebab, SlotSymbol::Taco, SlotSymbol::Sushi];
         assert!(!check_near_miss(row_all_diff));
     }
 
@@ -518,9 +521,9 @@ mod tests {
         let mut reels: [[SlotSymbol; 3]; 3] = Default::default();
 
         // Set up middle row with two matching symbols
-        reels[0][1] = SlotSymbol::Diamond;
-        reels[1][1] = SlotSymbol::Diamond;
-        reels[2][1] = SlotSymbol::Seven;
+        reels[0][1] = SlotSymbol::Sushi;
+        reels[1][1] = SlotSymbol::Sushi;
+        reels[2][1] = SlotSymbol::Sashimi;
 
         assert!(has_near_miss_pattern(&reels));
     }
@@ -530,17 +533,17 @@ mod tests {
         let mut reels: [[SlotSymbol; 3]; 3] = Default::default();
 
         // All rows have different symbols
-        reels[0][0] = SlotSymbol::Cherry;
-        reels[1][0] = SlotSymbol::Bell;
-        reels[2][0] = SlotSymbol::Diamond;
+        reels[0][0] = SlotSymbol::Kebab;
+        reels[1][0] = SlotSymbol::Taco;
+        reels[2][0] = SlotSymbol::Sushi;
 
-        reels[0][1] = SlotSymbol::Seven;
-        reels[1][1] = SlotSymbol::Devil;
-        reels[2][1] = SlotSymbol::Cherry;
+        reels[0][1] = SlotSymbol::Sashimi;
+        reels[1][1] = SlotSymbol::Pancake;
+        reels[2][1] = SlotSymbol::Kebab;
 
-        reels[0][2] = SlotSymbol::Bell;
-        reels[1][2] = SlotSymbol::Diamond;
-        reels[2][2] = SlotSymbol::Seven;
+        reels[0][2] = SlotSymbol::Taco;
+        reels[1][2] = SlotSymbol::Sushi;
+        reels[2][2] = SlotSymbol::Sashimi;
 
         assert!(!has_near_miss_pattern(&reels));
     }
@@ -572,9 +575,9 @@ mod tests {
         // Near-miss detection returns true for winning pattern too (3-of-a-kind has 2 matching)
         // But in spin_with_state, is_near_miss is only set when !is_win
         assert!(check_near_miss([
-            SlotSymbol::Cherry,
-            SlotSymbol::Cherry,
-            SlotSymbol::Cherry
+            SlotSymbol::Kebab,
+            SlotSymbol::Kebab,
+            SlotSymbol::Kebab
         ]));
     }
 
@@ -593,71 +596,71 @@ mod tests {
     }
 
     #[test]
-    fn grayed_high_tier_at_bet_1_diamond() {
+    fn grayed_high_tier_at_bet_1_sushi() {
         let reels: [[SlotSymbol; 3]; 3] = [
-            [SlotSymbol::Cherry, SlotSymbol::Diamond, SlotSymbol::Bell],
-            [SlotSymbol::Bell, SlotSymbol::Diamond, SlotSymbol::Cherry],
-            [SlotSymbol::Cherry, SlotSymbol::Diamond, SlotSymbol::Cherry],
+            [SlotSymbol::Kebab, SlotSymbol::Sushi, SlotSymbol::Taco],
+            [SlotSymbol::Taco, SlotSymbol::Sushi, SlotSymbol::Kebab],
+            [SlotSymbol::Kebab, SlotSymbol::Sushi, SlotSymbol::Kebab],
         ];
 
         let result = resolve_reels(reels, 1);
         assert!(result.grayed_high_tier);
-        // Diamond base payout: 10 * 1 = 10. Reduced by 1/3 ratio → round(10 * 1/3) = 3
+        // Sushi base payout: 8 * 1 = 8. Reduced by 1/3 ratio -> round(8 * 1/3) = 3
         assert_eq!(result.payout_coins, 3);
     }
 
     #[test]
-    fn grayed_high_tier_at_bet_2_seven() {
+    fn grayed_high_tier_at_bet_2_sashimi() {
         let reels: [[SlotSymbol; 3]; 3] = [
-            [SlotSymbol::Cherry, SlotSymbol::Seven, SlotSymbol::Bell],
-            [SlotSymbol::Bell, SlotSymbol::Seven, SlotSymbol::Cherry],
-            [SlotSymbol::Cherry, SlotSymbol::Seven, SlotSymbol::Bell],
+            [SlotSymbol::Kebab, SlotSymbol::Sashimi, SlotSymbol::Taco],
+            [SlotSymbol::Taco, SlotSymbol::Sashimi, SlotSymbol::Kebab],
+            [SlotSymbol::Kebab, SlotSymbol::Sashimi, SlotSymbol::Taco],
         ];
 
         let result = resolve_reels(reels, 2);
         assert!(result.grayed_high_tier);
-        // Seven base payout: 25 * 2 = 50. Reduced by 2/3 ratio → round(50 * 2/3) = 33
-        assert_eq!(result.payout_coins, 33);
+        // Sashimi base payout: 12 * 2 = 24. Reduced by 2/3 ratio -> round(24 * 2/3) = 16
+        assert_eq!(result.payout_coins, 16);
     }
 
     #[test]
-    fn no_gray_at_max_bet_3_devil() {
+    fn no_gray_at_max_bet_3_pancake() {
         let reels: [[SlotSymbol; 3]; 3] = [
-            [SlotSymbol::Cherry, SlotSymbol::Devil, SlotSymbol::Bell],
-            [SlotSymbol::Bell, SlotSymbol::Devil, SlotSymbol::Cherry],
-            [SlotSymbol::Cherry, SlotSymbol::Devil, SlotSymbol::Cherry],
+            [SlotSymbol::Kebab, SlotSymbol::Pancake, SlotSymbol::Taco],
+            [SlotSymbol::Taco, SlotSymbol::Pancake, SlotSymbol::Kebab],
+            [SlotSymbol::Kebab, SlotSymbol::Pancake, SlotSymbol::Kebab],
         ];
 
         let result = resolve_reels(reels, 3);
         assert!(!result.grayed_high_tier);
-        // Devil base payout: 50 * 3 = 150. No reduction at max bet.
+        // Pancake base payout: 50 * 3 = 150. No reduction at max bet.
         assert_eq!(result.payout_coins, 150);
     }
 
     #[test]
     fn no_gray_for_low_tier_symbols_at_bet_1() {
         let reels: [[SlotSymbol; 3]; 3] = [
-            [SlotSymbol::Cherry, SlotSymbol::Bell, SlotSymbol::Cherry],
-            [SlotSymbol::Cherry, SlotSymbol::Bell, SlotSymbol::Cherry],
-            [SlotSymbol::Bell, SlotSymbol::Bell, SlotSymbol::Cherry],
+            [SlotSymbol::Kebab, SlotSymbol::Taco, SlotSymbol::Kebab],
+            [SlotSymbol::Kebab, SlotSymbol::Taco, SlotSymbol::Kebab],
+            [SlotSymbol::Taco, SlotSymbol::Taco, SlotSymbol::Kebab],
         ];
 
         let result = resolve_reels(reels, 1);
-        // Bell is low tier → no gray regardless of bet
+        // Taco is low tier -> no gray regardless of bet
         assert!(!result.grayed_high_tier);
     }
 
     #[test]
     fn grayed_only_applies_to_matching_symbols() {
-        // Cherry matches row 0, high-tier scattered but not matching
+        // Kebab matches row 0, high-tier scattered but not matching
         let reels: [[SlotSymbol; 3]; 3] = [
-            [SlotSymbol::Cherry, SlotSymbol::Diamond, SlotSymbol::Bell],
-            [SlotSymbol::Cherry, SlotSymbol::Seven, SlotSymbol::Bell],
-            [SlotSymbol::Cherry, SlotSymbol::Devil, SlotSymbol::Cherry],
+            [SlotSymbol::Kebab, SlotSymbol::Sushi, SlotSymbol::Taco],
+            [SlotSymbol::Kebab, SlotSymbol::Sashimi, SlotSymbol::Taco],
+            [SlotSymbol::Kebab, SlotSymbol::Pancake, SlotSymbol::Kebab],
         ];
 
         let result = resolve_reels(reels, 1);
-        // Cherry matched on row 0 (low-tier), high-tier symbols don't match → no gray
+        // Kebab matched on row 0 (low-tier), high-tier symbols don't match -> no gray
         assert!(!result.grayed_high_tier);
     }
 }
