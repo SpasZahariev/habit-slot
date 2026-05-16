@@ -1,3 +1,4 @@
+use super::LeverSlider;
 use crate::state::AppState;
 use dioxus::prelude::*;
 use habit_slot::models::{SlotSymbol, SpinResult};
@@ -7,8 +8,6 @@ use habit_slot::sprites::symbol_sprite_uri;
 pub fn SlotMachine() -> Element {
     let mut app_state = use_context::<Signal<AppState>>();
 
-    let balance = app_state.read().coin_balance.balance;
-    let can_spin = balance >= 1 && !app_state.read().is_spinning;
     let last_result = app_state.read().last_spin_result.clone();
     let is_spinning = app_state.read().is_spinning;
     let animation_strips = app_state.read().animation_strips.clone();
@@ -47,18 +46,13 @@ pub fn SlotMachine() -> Element {
 
             div {
                 class: "flex justify-center mt-4",
-                button {
-                    class: format!(
-                        "spin-button border-none rounded-lg cursor-pointer px-10 py-3 text-xl font-bold {}",
-                        if can_spin { "bg-[#ff2d78] text-[#f0e6ff] shadow-[0_0_15px_rgba(255,45,120,0.5)]" } else { "bg-[#3a2a5e] text-gray-600 cursor-not-allowed" }
-                    ),
-                    disabled: !can_spin,
-                    onclick: move |_| {
+                LeverSlider {
+                    is_disabled: is_spinning,
+                    on_trigger: Callback::from(move |_| {
                         app_state.with_mut(|state| {
                             let _ = state.execute_spin(1);
                         });
-                    },
-                    "SPIN"
+                    })
                 }
             }
 
