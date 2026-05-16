@@ -335,12 +335,6 @@ impl AppState {
                 result.payout_coins,
                 format!("Slot win: {:?}", result.symbols_matched.map(|(s, _)| s)),
             );
-
-            // Push toast notification for winning spins
-            if let Some((symbol, count)) = result.symbols_matched {
-                let symbol_name = habit_slot::sprites::symbol_display_name(&symbol).to_string();
-                self.push_toast(format!("{} x{}", symbol_name, count), result.payout_coins);
-            }
         }
 
         #[cfg(feature = "db")]
@@ -368,6 +362,19 @@ impl AppState {
         if self.is_spinning {
             self.reels_stopped += 1;
             if self.reels_stopped >= 3 {
+                // Push toast after animation finishes (only for wins)
+                if let Some(ref result) = self.last_spin_result {
+                    if result.payout_coins > 0 {
+                        if let Some((symbol, count)) = result.symbols_matched {
+                            let symbol_name =
+                                habit_slot::sprites::symbol_display_name(&symbol).to_string();
+                            self.push_toast(
+                                format!("{} x{}", symbol_name, count),
+                                result.payout_coins,
+                            );
+                        }
+                    }
+                }
                 self.is_spinning = false;
                 self.animation_strips = None;
                 self.reels_stopped = 0;

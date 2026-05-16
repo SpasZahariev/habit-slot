@@ -16,14 +16,14 @@ pub fn SlotMachine() -> Element {
 
     if is_spinning && reels_stopped == 0 {
         let mut state_clone = use_context::<Signal<AppState>>().clone();
-        spawn(async move {
-            tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+          spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_millis(2500)).await;
             state_clone.with_mut(|s| s.stop_one_reel());
 
-            tokio::time::sleep(std::time::Duration::from_millis(600)).await;
+            tokio::time::sleep(std::time::Duration::from_millis(1200)).await;
             state_clone.with_mut(|s| s.stop_one_reel());
 
-            tokio::time::sleep(std::time::Duration::from_millis(600)).await;
+            tokio::time::sleep(std::time::Duration::from_millis(1200)).await;
             state_clone.with_mut(|s| s.stop_one_reel());
         });
     }
@@ -34,71 +34,74 @@ pub fn SlotMachine() -> Element {
                 position: relative;
                 overflow: hidden;
                 width: 70px;
-                height: 150px;
+                height: 176px;
                 flex-shrink: 0;
             }}
 
             .reel-strip {{
                 display: flex;
                 flex-direction: column;
+                gap: 4px;
+                padding-top: 5px;
+                padding-bottom: 5px;
             }}
 
-            @keyframes reel-spin-fast {{
+            @keyframes reel-spin-0 {{
                 0% {{
                     transform: translateY(0);
-                    filter: blur(3px);
+                    filter: blur(1.5px);
                 }}
-                85% {{
-                    filter: blur(2px);
+                80% {{
+                    filter: blur(1px);
                 }}
                 100% {{
-                    transform: translateY(-600px);
+                    transform: translateY(-653px);
                     filter: blur(0px);
                 }}
             }}
 
-            @keyframes reel-spin-medium {{
+            @keyframes reel-spin-1 {{
                 0% {{
                     transform: translateY(0);
-                    filter: blur(3px);
+                    filter: blur(1.5px);
                 }}
-                85% {{
-                    filter: blur(2px);
+                80% {{
+                    filter: blur(1px);
                 }}
                 100% {{
-                    transform: translateY(-600px);
+                    transform: translateY(-653px);
                     filter: blur(0px);
                 }}
             }}
 
-            @keyframes reel-spin-slow {{
+            @keyframes reel-spin-2 {{
                 0% {{
                     transform: translateY(0);
-                    filter: blur(3px);
+                    filter: blur(1.5px);
                 }}
-                85% {{
-                    filter: blur(2px);
+                80% {{
+                    filter: blur(1px);
                 }}
                 100% {{
-                    transform: translateY(-600px);
+                    transform: translateY(-653px);
                     filter: blur(0px);
                 }}
             }}
 
             .reel-strip-anim-0 {{
-                animation: reel-spin-fast 1.0s cubic-bezier(0.15, 0.80, 0.30, 1.0) forwards;
+                animation: reel-spin-0 2.5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
             }}
 
             .reel-strip-anim-1 {{
-                animation: reel-spin-medium 1.6s cubic-bezier(0.15, 0.80, 0.30, 1.0) forwards;
+                animation: reel-spin-1 3.7s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
             }}
 
             .reel-strip-anim-2 {{
-                animation: reel-spin-slow 2.2s cubic-bezier(0.15, 0.80, 0.30, 1.0) forwards;
+                animation: reel-spin-2 4.9s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
             }}
 
             .reel-strip-static {{
-                transform: translateY(-600px);
+                transform: translateY(-653px);
             }}
         " }
 
@@ -127,7 +130,11 @@ pub fn SlotMachine() -> Element {
                 }
             }
 
-            SpinResultDisplay { spin_result: last_result }
+            if !is_spinning {
+                SpinResultDisplay { spin_result: last_result }
+            } else {
+                div { class: "min-h-[24px]" }
+            }
         }
     }
 }
@@ -292,15 +299,18 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         })
         .collect();
 
-    rsx! {
+      rsx! {
         div {
             class: "reel-column-viewport",
-            for cell in cells {
-                div {
-                    class: cell.cell_class,
-                    img {
-                        src: cell.uri,
-                        class: "w-[28px] h-[24px] object-contain",
+            div {
+                class: "reel-strip",
+                for cell in cells {
+                    div {
+                        class: cell.cell_class,
+                        img {
+                            src: cell.uri,
+                            class: "w-[28px] h-[24px] object-contain",
+                        }
                     }
                 }
             }
