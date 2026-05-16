@@ -153,6 +153,16 @@
 - 6 new SpriteRegistry tests all pass (64 total): valid paths, correct names, no duplicates, file mapping, coin icon
 - Symbol weights bug fix: corrected `SYMBOL_WEIGHTS` to sum to 100 (Pancake 4→10), fixing probability_distribution_kebab test
 
+## Issue #28: Slice 2: Toast notification system ✓ DONE
+
+- `ToastMessage` struct in `src/models.rs`: symbol_name (String), payout (u32), created_at (Instant)
+- `ToastManager` with `push()` and `dismiss_expired()` — FIFO queue, auto-dismiss after TOAST_TIMEOUT_MS (2.5s)
+- `ToastContainer` component in `src/components/toast_container.rs`: fixed top-center banner with slide-down animation via CSS `@keyframes toast-slide-in`
+- Async task polls AppState every 300ms to dismiss expired toasts, triggering re-render
+- `execute_spin()` in state.rs pushes toast on winning spins: format `"SymbolName x3"` + payout amount
+- Toast styled with vaporwave palette: dark bg, pink border, cyan symbol name, pink coin count
+- 5 new tests (69 total): push adds entry, FIFO ordering, dismiss removes old, keeps recent, selective removal
+
 ## Issue #10: SQLite persistence layer — IN PROGRESS
 
 ### DB Module ✓ Done
