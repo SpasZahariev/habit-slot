@@ -1,14 +1,14 @@
-.reel-column-viewport {
+.reel-column-viewport {{
     position: relative;
-}
+}}
 
-.reel-strip {
+.reel-strip {{
     display: flex;
     flex-direction: column;
     gap: 0px;
-}
+}}
 
 /* Smooth ease-out for the final reel (extra dramatic slow snap) */
-.ease-out-slow {
+.ease-out-slow {{
     transition-timing-function: cubic-bezier(0.15, 0.85, 0.35, 1.0) !important;
-}
+}}

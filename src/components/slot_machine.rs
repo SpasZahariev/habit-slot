@@ -15,21 +15,35 @@ pub fn SlotMachine() -> Element {
 
     // Spawn staggered reel-stop timers when spin starts with no reels stopped yet.
     if is_spinning && reels_stopped == 0 {
-        let state = use_context::<Signal<AppState>>().clone();
+        let mut state = use_context::<Signal<AppState>>().clone();
         spawn(async move {
-            Timer::after_millis(1000).await;
+            tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
             state.with_mut(|s| s.stop_one_reel());
 
-            Timer::after_millis(600).await;
+            tokio::time::sleep(std::time::Duration::from_millis(600)).await;
             state.with_mut(|s| s.stop_one_reel());
 
-            Timer::after_millis(600).await;
+            tokio::time::sleep(std::time::Duration::from_millis(600)).await;
             state.with_mut(|s| s.stop_one_reel());
         });
     }
 
     rsx! {
-        style { include_str!("slot_styles.css") }
+        style { r#"
+            .reel-column-viewport {{
+                position: relative;
+            }}
+
+            .reel-strip {{
+                display: flex;
+                flex-direction: column;
+                gap: 0px;
+            }}
+
+            .ease-out-slow {{
+                transition-timing-function: cubic-bezier(0.15, 0.85, 0.35, 1.0) !important;
+            }}
+        "# }
 
         div {
             class: "slot-machine mt-8 p-4 bg-[#1a0a2e] rounded-xl border-2 border-[#ff2d78] w-[96%]",
@@ -48,7 +62,7 @@ pub fn SlotMachine() -> Element {
                 class: "flex justify-center mt-4",
                 LeverSlider {
                     is_disabled: is_spinning,
-                    on_trigger: Callback::from(move |_| {
+                    on_trigger: Callback::new(move |_| {
                         app_state.with_mut(|state| {
                             let _ = state.execute_spin(1);
                         });
@@ -68,15 +82,20 @@ fn AnimatedReels(
     reels_stopped: u8,
     spin_result: Option<SpinResult>,
 ) -> Element {
+    let column_data = strips.iter().enumerate().map(|(col, strip)| {
+        (col, strip.clone(), (col as u8) < reels_stopped)
+    }).collect::<Vec<_>>();
+
     rsx! {
         div {
             class: "reels-container flex justify-center gap-2 p-4 bg-[#0f0520] rounded-lg",
-            for col in 0..3 {
+            for (col, strip, is_stopped) in column_data {
                 AnimatedReelColumn {
                     col,
-                    strip: strips[col].clone(),
-                    is_stopped: col as u8 < reels_stopped,
-                    result_col: strips[col],
+                    strip: strip.clone(),
+                    is_stopped,
+                    reels_stopped,
+                    result_col: strip,
                     spin_result: spin_result.clone(),
                 }
             }
@@ -89,6 +108,7 @@ fn AnimatedReelColumn(
     col: usize,
     strip: Vec<SlotSymbol>,
     is_stopped: bool,
+    reels_stopped: u8,
     result_col: Vec<SlotSymbol>,
     spin_result: Option<SpinResult>,
 ) -> Element {
@@ -99,7 +119,7 @@ fn AnimatedReelColumn(
         // Show last 3 symbols (the result)
         format!("translateY(-{}px)", strip_height.saturating_sub(visible_height))
     } else {
-        "translateY(0px)"
+        "translateY(0px)".to_string()
     };
 
     let is_grayed = spin_result
@@ -139,7 +159,7 @@ fn AnimatedReelColumn(
                 ),
                 for (idx, symbol) in strip.iter().enumerate() {
                     ReelSymbolCell {
-                        symbol,
+                        symbol: *symbol,
                         is_winning: winning_global_row == Some(idx),
                         is_grayed,
                     }

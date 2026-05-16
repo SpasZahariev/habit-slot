@@ -1,76 +1,36 @@
 use crate::models::SlotSymbol;
 
-#[derive(Debug, Clone, Copy)]
-pub struct SpriteRegistry {
-    pub path: &'static str,
-    pub display_name: &'static str,
-}
-
-pub const SPRITE_REGISTRY: [(SlotSymbol, SpriteRegistry); 6] = [
-    (
-        SlotSymbol::Kebab,
-        SpriteRegistry {
-            path: "/Foods/low1.png",
-            display_name: "Kebab",
-        },
-    ),
-    (
-        SlotSymbol::Taco,
-        SpriteRegistry {
-            path: "/Foods/low2.png",
-            display_name: "Taco",
-        },
-    ),
-    (
-        SlotSymbol::Pizza,
-        SpriteRegistry {
-            path: "/Foods/low3.png",
-            display_name: "Pizza",
-        },
-    ),
-    (
-        SlotSymbol::Sushi,
-        SpriteRegistry {
-            path: "/Foods/med1.png",
-            display_name: "Sushi",
-        },
-    ),
-    (
-        SlotSymbol::Sashimi,
-        SpriteRegistry {
-            path: "/Foods/med2.png",
-            display_name: "Sashimi",
-        },
-    ),
-    (
-        SlotSymbol::Pancake,
-        SpriteRegistry {
-            path: "/Foods/high1.png",
-            display_name: "Pancake",
-        },
-    ),
-];
+const KEBAB_URI: &str = concat!("data:image/png;base64,", include_str!("kebab_base64.txt"));
+const TACO_URI: &str = concat!("data:image/png;base64,", include_str!("taco_base64.txt"));
+const PIZZA_URI: &str = concat!("data:image/png;base64,", include_str!("pizza_base64.txt"));
+const SUSHI_URI: &str = concat!("data:image/png;base64,", include_str!("sushi_base64.txt"));
+const SASHIMI_URI: &str = concat!("data:image/png;base64,", include_str!("sashimi_base64.txt"));
+const PANCAKE_URI: &str = concat!("data:image/png;base64,", include_str!("pancake_base64.txt"));
 
 pub fn symbol_sprite_uri(symbol: &SlotSymbol) -> &'static str {
-    for &(s, reg) in &SPRITE_REGISTRY {
-        if s == *symbol {
-            return reg.path;
-        }
+    match symbol {
+        SlotSymbol::Kebab => KEBAB_URI,
+        SlotSymbol::Taco => TACO_URI,
+        SlotSymbol::Pizza => PIZZA_URI,
+        SlotSymbol::Sushi => SUSHI_URI,
+        SlotSymbol::Sashimi => SASHIMI_URI,
+        SlotSymbol::Pancake => PANCAKE_URI,
     }
-    "/Foods/low1.png"
 }
 
 pub fn symbol_display_name(symbol: &SlotSymbol) -> &'static str {
-    for &(s, reg) in &SPRITE_REGISTRY {
-        if s == *symbol {
-            return reg.display_name;
-        }
+    match symbol {
+        SlotSymbol::Kebab => "Kebab",
+        SlotSymbol::Taco => "Taco",
+        SlotSymbol::Pizza => "Pizza",
+        SlotSymbol::Sushi => "Sushi",
+        SlotSymbol::Sashimi => "Sashimi",
+        SlotSymbol::Pancake => "Pancake",
     }
-    "Unknown"
 }
 
 pub fn coin_icon_uri() -> &'static str {
-    symbol_sprite_uri(&SlotSymbol::Pancake)
+    PANCAKE_URI
 }
 
 #[cfg(test)]
@@ -78,7 +38,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn all_symbols_map_to_valid_paths() {
+    fn all_symbols_map_to_non_empty_uris() {
         let symbols = [
             SlotSymbol::Kebab,
             SlotSymbol::Taco,
@@ -90,12 +50,12 @@ mod tests {
 
         for symbol in &symbols {
             let uri = symbol_sprite_uri(symbol);
+            assert!(!uri.is_empty(), "Sprite URI for {:?} is empty", symbol);
             assert!(
-                uri.starts_with("/Foods/"),
-                "Path should be under /Foods/: {:?}",
+                uri.starts_with("data:image/png;base64,"),
+                "URI should be a data URL: {:?}",
                 symbol
             );
-            assert!(uri.ends_with(".png"), "Path should be a PNG: {:?}", symbol);
         }
     }
 
@@ -107,58 +67,6 @@ mod tests {
         assert_eq!(symbol_display_name(&SlotSymbol::Sushi), "Sushi");
         assert_eq!(symbol_display_name(&SlotSymbol::Sashimi), "Sashimi");
         assert_eq!(symbol_display_name(&SlotSymbol::Pancake), "Pancake");
-    }
-
-    #[test]
-    fn no_duplicate_paths() {
-        let paths: Vec<&str> = SPRITE_REGISTRY.iter().map(|(_, r)| r.path).collect();
-        let mut sorted = paths.clone();
-        sorted.sort();
-        sorted.dedup();
-        assert_eq!(
-            sorted.len(),
-            6,
-            "Expected 6 unique sprite paths, found {}",
-            sorted.len()
-        );
-    }
-
-    #[test]
-    fn no_duplicate_display_names() {
-        let names: Vec<&str> = SPRITE_REGISTRY
-            .iter()
-            .map(|(_, r)| r.display_name)
-            .collect();
-        let mut sorted = names.clone();
-        sorted.sort();
-        sorted.dedup();
-        assert_eq!(
-            sorted.len(),
-            6,
-            "Expected 6 unique display names, found {}",
-            sorted.len()
-        );
-    }
-
-    #[test]
-    fn sprite_registry_maps_correct_files() {
-        let expected = [
-            (SlotSymbol::Kebab, "/Foods/low1.png"),
-            (SlotSymbol::Taco, "/Foods/low2.png"),
-            (SlotSymbol::Pizza, "/Foods/low3.png"),
-            (SlotSymbol::Sushi, "/Foods/med1.png"),
-            (SlotSymbol::Sashimi, "/Foods/med2.png"),
-            (SlotSymbol::Pancake, "/Foods/high1.png"),
-        ];
-
-        for (symbol, expected_path) in &expected {
-            assert_eq!(
-                symbol_sprite_uri(symbol),
-                *expected_path,
-                "Wrong path for {:?}",
-                symbol
-            );
-        }
     }
 
     #[test]
