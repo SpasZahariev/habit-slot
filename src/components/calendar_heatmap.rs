@@ -1,10 +1,15 @@
 use chrono::{Datelike, NaiveDate};
 use dioxus::prelude::*;
 
-use habit_slot::models::{CalendarColor, Completion, Habit};
+use habit_slot::models::{CalendarColor, Habit};
 use habit_slot::streaks;
 
 use crate::state::AppState;
+
+struct CellData {
+    day_text: String,
+    style: String,
+}
 
 /// Calendar heatmap showing completion history for a single habit.
 /// Displays one month at a time with prev/next navigation.
@@ -17,8 +22,10 @@ pub fn CalendarHeatmap(habit: Habit) -> Element {
     let year = today.year();
     let month = today.month() as u32;
 
-    let current_year = selected_month.read().map(|(y, _)| y).unwrap_or(year);
-    let current_month = selected_month.read().map(|(_, m)| m).unwrap_or(month);
+    let (current_year, current_month) = match selected_month.read().as_ref() {
+        Some((y, m)) => (*y, *m),
+        None => (year, month),
+    };
 
     let completions = app_state.read().completions.clone();
 
@@ -32,33 +39,47 @@ pub fn CalendarHeatmap(habit: Habit) -> Element {
     let today_day = today.day();
 
     let prev_month = move |_| {
-        let (y, m) = match selected_month.read() {
+        let (y, m) = match *selected_month.read() {
             Some((y, 1)) => (y - 1, 12),
             Some((y, m)) => (y, m - 1),
             None => (year - 1, 12),
         };
-        selected_month.write() = Some((y, m));
+        *selected_month.write() = Some((y, m));
     };
 
     let next_month = move |_| {
-        let (y, m) = match selected_month.read() {
+        let (y, m) = match *selected_month.read() {
             Some((y, 12)) => (y + 1, 1),
             Some((y, m)) => (y, m + 1),
             None => (year + 1, 1),
         };
-        selected_month.write() = Some((y, m));
+        *selected_month.write() = Some((y, m));
     };
 
-    let cells: Vec<_> = (0..days_in_month + weekday_offset)
+    let cells: Vec<CellData> = (0..days_in_month)
         .map(|i| {
-            if i < weekday_offset {
-                None
-            } else {
-                let day = i - weekday_offset + 1;
-                Some(day as u32)
+            let day = (i + 1) as u32;
+            let date = NaiveDate::from_ymd_opt(current_year, current_month, day).unwrap_or(today);
+            let color = streaks::calendar_color(date, &completions, habit.id);
+            let is_today = is_today_month && day == today_day;
+            CellData {
+                day_text: format!("{}", day),
+                style: format!(
+                    "aspect-ratio: 1; border-radius: 3px; background: {}; \
+                     display: flex; align-items: center; justify-content: center; \
+                     font-size: 0.7rem; color: #ccc; cursor: default; {}",
+                    color.hex(),
+                    if is_today {
+                        "border: 2px solid #f5c518;"
+                    } else {
+                        ""
+                    }
+                ),
             }
         })
         .collect();
+
+    let spacer_count = weekday_offset;
 
     rsx! {
         div {
@@ -96,31 +117,16 @@ pub fn CalendarHeatmap(habit: Habit) -> Element {
                     }
                 }
 
-                for (idx, day) in cells.iter().enumerate() {
-                    if day.is_none() {
-                        div {
-                            style: "aspect-ratio: 1; border-radius: 3px; background: transparent;",
-                        }
-                    } else {
-                        let day = day.unwrap();
-                        let date = NaiveDate::from_ymd_opt(current_year, current_month, day)
-                            .unwrap_or(today);
-                        let color = streaks::calendar_color(date, &completions, habit.id);
-                        let is_today = is_today_month && day == today_day;
+                for _ in 0..spacer_count {
+                    div {
+                        style: "aspect-ratio: 1; border-radius: 3px; background: transparent;",
+                    }
+                }
 
-                        div {
-                            style: format!(
-                                "aspect-ratio: 1; border-radius: 3px; background: {}; \
-                                 display: flex; align-items: center; justify-content: center; \
-                                 font-size: 0.7rem; color: #ccc; cursor: default; {}",
-                                color.hex(),
-                                if is_today { "border: 2px solid #f5c518;" } else { "" }
-                            ),
-                            if day == today && is_today_month {
-                                title: "Today"
-                            }
-                            "{day}"
-                        }
+                for cell in cells {
+                    div {
+                        style: cell.style,
+                        "{cell.day_text}"
                     }
                 }
             }

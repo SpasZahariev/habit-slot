@@ -112,7 +112,7 @@ impl AppState {
             reward_pool: RewardPool::default(),
         };
         let id = habit.id;
-        let created_at = habit.created_at;
+        let _created_at = habit.created_at;
         self.milestone_trackers
             .insert(id, MilestoneTracker::default());
         self.habits.push(habit);
@@ -169,7 +169,7 @@ impl AppState {
                 date: today,
             });
 
-            let tx_count_before = self.coin_balance.transactions.len();
+            let _tx_count_before = self.coin_balance.transactions.len();
             economy::on_complete(&mut self.coin_balance, new_streak);
             #[cfg(feature = "db")]
             self.persist_new_transactions(tx_count_before);
@@ -216,7 +216,7 @@ impl AppState {
 
     /// Check milestone progress for a habit without claiming (for UI display).
     pub fn get_milestone_progress(&self, habit_id: Uuid) -> rewards::MilestoneCheckResult {
-        let tracker = self
+        let mut tracker = self
             .milestone_trackers
             .get(&habit_id)
             .cloned()
@@ -259,7 +259,7 @@ impl AppState {
     /// Execute a slot spin with integrated pity tracking and economy.
     /// Deducts bet, resolves spin, credits winnings. Returns the SpinResult.
     pub fn execute_spin(&mut self, bet: u32) -> Option<SpinResult> {
-        let tx_before = self.coin_balance.transactions.len();
+        let _tx_before = self.coin_balance.transactions.len();
         if !economy::spend(&mut self.coin_balance, bet, format!("Bet {} coins", bet)) {
             return None;
         }

@@ -13,8 +13,8 @@ fn format_date(d: &chrono::NaiveDate) -> String {
 
 #[component]
 pub fn HabitList() -> Element {
-    let mut app_state = use_context::<Signal<AppState>>();
-    let mut expanded_calendars = use_signal(|| HashMap::<Uuid, bool>::new());
+    let app_state = use_context::<Signal<AppState>>();
+    let expanded_calendars = use_signal(|| HashMap::<Uuid, bool>::new());
 
     let habits = app_state.read().habits.clone();
 
@@ -30,9 +30,9 @@ pub fn HabitList() -> Element {
     }
 
     rsx! {
-        ul {
-            class: "habit-list",
-            style: "list-style: none; padding: 0; margin: 0; width: 100%; max-width: 500px;",
+          ul {
+                class: "habit-list",
+                style: "list-style: none; padding: 0; margin: 0; width: 100%; max-width: 500px;",
             for habit in habits {
                 HabitItem {
                     habit,
@@ -63,15 +63,18 @@ pub fn HabitItem(habit: Habit, expanded_calendars: Signal<HashMap<Uuid, bool>>) 
 
     let milestone_progress = app_state.read().get_milestone_progress(habit.id);
     let streak_goal_text = format!(
-        "Streak: {}/{},
-        streak,
-        milestone_progress.next_streak_goal.0
+        "Streak: {}/{}",
+        streak, milestone_progress.next_streak_goal.0
     );
-    let total_completions = app_state.read().completions.iter().filter(|c| c.habit_id == habit.id).count();
+    let total_completions = app_state
+        .read()
+        .completions
+        .iter()
+        .filter(|c| c.habit_id == habit.id)
+        .count();
     let completion_goal_text = format!(
         "Tasks: {}/{}",
-        total_completions,
-        milestone_progress.next_completion_goal.0
+        total_completions, milestone_progress.next_completion_goal.0
     );
 
     rsx! {
@@ -142,7 +145,7 @@ pub fn HabitItem(habit: Habit, expanded_calendars: Signal<HashMap<Uuid, bool>>) 
             }
 
             if is_expanded {
-                CalendarHeatmap { habit }
+                CalendarHeatmap { habit: habit.clone() }
             }
         }
     }

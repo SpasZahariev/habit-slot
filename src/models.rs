@@ -45,7 +45,7 @@ impl Default for RewardPool {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SpinResult {
     pub reels: [[SlotSymbol; 3]; 3],
     pub symbols_matched: Option<(SlotSymbol, u8)>,

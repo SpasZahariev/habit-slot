@@ -4,8 +4,8 @@ use habit_slot::models::{SlotSymbol, SpinResult};
 
 #[component]
 pub fn SlotMachine() -> Element {
-    let app_state = use_context::<Signal<AppState>>();
-    let mut bet = use_signal(|| 1u32);
+    let mut app_state = use_context::<Signal<AppState>>();
+    let bet = use_signal(|| 1u32);
 
     let balance = app_state.read().coin_balance.balance;
     let can_spin = balance >= bet() as i64;
@@ -21,9 +21,9 @@ pub fn SlotMachine() -> Element {
                 "Soul Slot Machine"
             }
 
-            BetSelector { bet: &mut bet }
+            BetSelector { bet: bet.clone() }
 
-            Reels { spin_result: &last_result }
+            Reels { spin_result: last_result.clone() }
 
             div {
                 style: "display: flex; justify-content: center; margin-top: 16px;",
@@ -47,18 +47,18 @@ pub fn SlotMachine() -> Element {
                 }
             }
 
-            SpinResultDisplay { spin_result: &last_result }
+            SpinResultDisplay { spin_result: last_result }
         }
     }
 }
 
 #[component]
-fn BetSelector(bet: &Signal<u32>) -> Element {
+fn BetSelector(bet: Signal<u32>) -> Element {
     rsx! {
         div {
             class: "bet-selector",
             style: "display: flex; justify-content: center; gap: 8px; margin-bottom: 16px;",
-            for amount in [1, 2, 3] {
+              for amount in [1, 2, 3] {
                 button {
                     onclick: move |_| {
                         *bet.write() = amount;
@@ -68,7 +68,7 @@ fn BetSelector(bet: &Signal<u32>) -> Element {
                     } else {
                         "background: #16213e; color: #f5c518; border: 1px solid #f5c518; padding: 8px 20px; border-radius: 6px; cursor: pointer;"
                     },
-                    "{amount} coin{if amount > 1 { \"s\" } else { \"\" }}"
+                    "{coin_label(amount)}"
                 }
             }
         }
@@ -76,7 +76,7 @@ fn BetSelector(bet: &Signal<u32>) -> Element {
 }
 
 #[component]
-fn Reels(spin_result: &Option<SpinResult>) -> Element {
+fn Reels(spin_result: Option<SpinResult>) -> Element {
     let default_reels: [[SlotSymbol; 3]; 3] = [
         [SlotSymbol::Cherry, SlotSymbol::Bell, SlotSymbol::Diamond],
         [SlotSymbol::Seven, SlotSymbol::Cherry, SlotSymbol::Devil],
@@ -93,18 +93,14 @@ fn Reels(spin_result: &Option<SpinResult>) -> Element {
             class: "reels-container",
             style: "display: flex; justify-content: center; gap: 8px; padding: 16px; background: #1a1a2e; border-radius: 8px;",
             for col in 0..3 {
-                ReelColumn { col, reels: &reels, spin_result }
+                ReelColumn { col, reels: reels.clone(), spin_result: spin_result.clone() }
             }
         }
     }
 }
 
 #[component]
-fn ReelColumn(
-    col: usize,
-    reels: &[[SlotSymbol; 3]; 3],
-    spin_result: &Option<SpinResult>,
-) -> Element {
+fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinResult>) -> Element {
     let is_grayed = spin_result
         .as_ref()
         .map(|r| r.grayed_high_tier)
@@ -125,24 +121,28 @@ fn ReelColumn(
         None
     });
 
+    let cells: Vec<_> = (0..3)
+        .map(|row| {
+            let is_winning_cell = winning_row == Some(row);
+            let cell_style = if is_grayed && is_winning_cell {
+                "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #16213e; border-radius: 6px; font-size: 2rem; filter: grayscale(100%) brightness(50%); opacity: 0.5;"
+            } else {
+                "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #16213e; border-radius: 6px; font-size: 2rem;"
+            };
+            let emoji = symbol_to_emoji(&reels[col][row]).to_string();
+            ReelCell { cell_style, emoji }
+        })
+        .collect();
+
     rsx! {
         div {
             class: "reel-column",
             style: "display: flex; flex-direction: column; gap: 4px;",
-            for row in 0..3 {
-                let symbol = &reels[col][row];
-                let is_winning_cell = winning_row == Some(row);
-
-                let cell_style = if is_grayed && is_winning_cell {
-                    "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #16213e; border-radius: 6px; font-size: 2rem; filter: grayscale(100%) brightness(50%); opacity: 0.5;"
-                } else {
-                    "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #16213e; border-radius: 6px; font-size: 2rem;"
-                };
-
+            for cell in cells {
                 div {
                     class: "reel-symbol",
-                    style: cell_style,
-                    "{symbol_to_emoji(symbol)}"
+                    style: cell.cell_style,
+                    "{cell.emoji}"
                 }
             }
         }
@@ -150,7 +150,7 @@ fn ReelColumn(
 }
 
 #[component]
-fn SpinResultDisplay(spin_result: &Option<SpinResult>) -> Element {
+fn SpinResultDisplay(spin_result: Option<SpinResult>) -> Element {
     rsx! {
         div {
             class: "spin-result",
@@ -188,6 +188,15 @@ fn SpinResultDisplay(spin_result: &Option<SpinResult>) -> Element {
             }
         }
     }
+}
+
+struct ReelCell {
+    cell_style: &'static str,
+    emoji: String,
+}
+
+fn coin_label(amount: u32) -> String {
+    format!("{} coin{}", amount, if amount > 1 { "s" } else { "" })
 }
 
 fn symbol_to_emoji(symbol: &SlotSymbol) -> &'static str {
