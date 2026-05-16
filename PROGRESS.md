@@ -82,7 +82,17 @@
 - UI display: HabitItem shows "Streak: X/Y | Tasks: A/B" progress line beneath habit name
 - 11 new tests all pass: claim-once, tier advancement, empty pool, reward selection, tier mapping, format_progress
 
-## Issue #19: Global styles, white border fix, rename to Habit Slot ✓ DONE
+## Issue #19: Global styles, white border fix, rename to Habit Slot — IN PROGRESS
+
+### What's done so far:
+- Vaporwave palette applied across all components (pink/cyan/purple)
+- Renamed "Spas Slot" → "Habit Slot", "Soul Coins" → "coins"
+- Added viewport meta tag for Android mobile rendering
+- Added inline JS script to reset html/body margin/padding on Android WebView
+- Removed max-width: 100vw (caused overflow) — now width: 100% + overflow-x: hidden
+- Reduced app padding from 24px → 16px for better mobile fit
+
+### Remaining: Pixelify Sans font still not loading on Android, white border persists
 
 - Inject CSS reset via `<style>` tag in rsx! (html/body margin/padding: 0, overflow: hidden) for Android white border fix
 - Load Pixelify Sans from Google Fonts via `@import` in injected style block

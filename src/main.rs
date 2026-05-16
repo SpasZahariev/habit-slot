@@ -9,7 +9,7 @@ fn main() {
     launch(App);
 }
 
-const GLOBAL_CSS: &str = "html,body{margin:0!important;padding:0!important;overflow:hidden!important;width:100%;height:100%}body{font-family:'Pixelify Sans',sans-serif!important}*{box-sizing:border-box}";
+const GLOBAL_CSS: &str = "html,body{margin:0!important;padding:0!important;overflow:hidden!important;width:100%!important;height:100%!important;background:#1a0a2e!important}body{font-family:'Pixelify Sans',sans-serif!important}*{box-sizing:border-box!important}";
 
 fn App() -> Element {
     let app_state = use_app_state();
@@ -17,12 +17,13 @@ fn App() -> Element {
     provide_context(app_state.clone());
 
     rsx! {
+        Meta { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" }
         Stylesheet { integrity: "", href: "https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" }
-        style { content: GLOBAL_CSS }
+        script { r#"document.documentElement.style.margin='0';document.documentElement.style.padding='0';document.body.style.margin='0';document.body.style.padding='0';"# }
 
         div {
             class: "app",
-            style: "display: flex; flex-direction: column; align-items: center; min-height: 100vh; width: 100vw; margin: 0; padding: 24px; background: linear-gradient(180deg, #1a0a2e, #2d1b69); color: #f0e6ff; font-family: 'Pixelify Sans', sans-serif;",
+            style: "display: flex; flex-direction: column; align-items: center; min-height: 100dvh; width: 100%; overflow-x: hidden; margin: 0 auto; padding: 16px; background: linear-gradient(180deg, #1a0a2e, #2d1b69); color: #f0e6ff; font-family: 'Pixelify Sans', sans-serif;",
 
             h1 {
                 style: "font-size: 2rem; margin-bottom: 24px; color: #ff2d78; text-shadow: 0 0 10px rgba(255,45,120,0.5);",

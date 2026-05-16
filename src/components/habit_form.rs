@@ -17,7 +17,7 @@ pub fn HabitForm() -> Element {
                 }
             },
             class: "habit-form",
-            style: "display: flex; gap: 8px; margin-bottom: 24px; width: 100%; max-width: 500px;",
+            style: "display: flex; gap: 8px; margin-bottom: 24px; width: 100%; max-width: 90vw;",
 
             input {
                 r#type: "text",

@@ -14,7 +14,7 @@ pub fn SlotMachine() -> Element {
     rsx! {
         div {
             class: "slot-machine",
-            style: "margin-top: 32px; padding: 24px; background: #1a0a2e; border-radius: 12px; border: 2px solid #ff2d78; width: 100%; max-width: 500px;",
+            style: "margin-top: 32px; padding: 24px; background: #1a0a2e; border-radius: 12px; border: 2px solid #ff2d78; width: 100%; max-width: min(500px, calc(100vw - 64px));",
 
             h2 {
                 style: "text-align: center; color: #ff2d78; margin-bottom: 16px; text-shadow: 0 0 8px rgba(255,45,120,0.4);",
