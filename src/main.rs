@@ -23,7 +23,7 @@ fn App() -> Element {
 
         div {
             class: "app",
-            style: "display: flex; flex-direction: column; align-items: center; min-height: 100dvh; width: 100%; overflow-x: hidden; margin: 0 auto; padding: 16px; background: linear-gradient(180deg, #1a0a2e, #2d1b69); color: #f0e6ff; font-family: 'Pixelify Sans', sans-serif;",
+            style: "display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 24px; background: linear-gradient(180deg, #1a0a2e, #2d1b69); color: #f0e6ff; font-family: 'Pixelify Sans', sans-serif;",
 
             h1 {
                 style: "font-size: 2rem; margin-bottom: 24px; color: #ff2d78; text-shadow: 0 0 10px rgba(255,45,120,0.5);",

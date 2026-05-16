@@ -32,7 +32,7 @@ pub fn HabitList() -> Element {
     rsx! {
           ul {
                 class: "habit-list",
-                style: "list-style: none; padding: 0; margin: 0; width: 100%; max-width: min(450px, 90vw); gap: 8px; display: flex; flex-direction: column;",
+                style: "list-style: none; padding: 0; margin: 0; width: 100%; max-width: 500px; gap: 8px; display: flex; flex-direction: column;",
             for habit in habits {
                 HabitItem {
                     habit,
