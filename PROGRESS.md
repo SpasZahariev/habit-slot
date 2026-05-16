@@ -82,6 +82,17 @@
 - UI display: HabitItem shows "Streak: X/Y | Tasks: A/B" progress line beneath habit name
 - 11 new tests all pass: claim-once, tier advancement, empty pool, reward selection, tier mapping, format_progress
 
+## Issue #20: Navigation: HomePage + NavBar + page routing in state ✓ DONE
+
+- `Page` enum added to state.rs with variants: Home, SlotMachine, Habits, CreateHabit
+- AppState holds current_page field, defaults to Home on app load
+- HomePage component renders two big styled buttons ("Slot Machine" and "Habits") that navigate via signal
+- NavBar component shows ← back arrow + page title text, navigates back to Home on tap
+- NavBar appears on all non-home pages
+- main.rs conditionally renders HomePage, SlotMachine, or Habits based on current_page signal
+- Old inline HabitForm removed from main.rs (replaced by navigation)
+- All 49 existing tests pass
+
 ## Issue #19: Global styles, white border fix, rename to Habit Slot — IN PROGRESS
 
 ### What's done so far:

@@ -15,16 +15,16 @@ pub fn NavBar() -> Element {
 
     rsx! {
         div {
-            class: "flex items-center gap-3 mb-6 pb-3 border-b border-[#ff2d78]/30",
+            class: "flex items-start gap-3 mb-6 pb-3 border-b border-[#ff2d78]/30",
             button {
-                class: "text-2xl text-[#ff2d78] cursor-pointer bg-none border-none p-1",
+                class: "text-4xl font-bold text-[#ff2d78] cursor-pointer bg-none border-none p-1 leading-none",
                 onclick: move |_| {
                     app_state.with_mut(|state| state.go_home());
                 },
                 "\u{2190}"
             }
             h2 {
-                class: "text-xl text-[#f0e6ff]",
+                class: "text-xl text-[#f0e6ff] pt-1",
                 "{title}"
             }
         }
