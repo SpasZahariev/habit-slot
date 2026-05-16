@@ -25,14 +25,14 @@ pub fn HabitForm() -> Element {
                 value: &*name.read(),
                 oninput: move |e| name.set(e.value().to_string()),
                 class: "habit-input",
-                style: "flex: 1; padding: 12px; border: 1px solid #f5c518; border-radius: 8px; background: #16213e; color: #f5c518; font-size: 1rem;",
+                style: "flex: 1; padding: 12px; border: 1px solid #ff2d78; border-radius: 8px; background: #2a1a4e; color: #f0e6ff; font-size: 1rem;",
             }
 
             button {
                 r#type: "submit",
                 disabled: name.read().trim().is_empty(),
                 class: "habit-submit",
-                style: "padding: 12px 24px; border: none; border-radius: 8px; background: #f5c518; color: #1a1a2e; font-weight: bold; cursor: pointer; font-size: 1rem;",
+                style: "padding: 12px 24px; border: none; border-radius: 8px; background: #ff2d78; color: #f0e6ff; font-weight: bold; cursor: pointer; font-size: 1rem;",
                 "Add"
             }
         }

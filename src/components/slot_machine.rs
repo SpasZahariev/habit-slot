@@ -14,11 +14,11 @@ pub fn SlotMachine() -> Element {
     rsx! {
         div {
             class: "slot-machine",
-            style: "margin-top: 32px; padding: 24px; background: #0d1b2a; border-radius: 12px; border: 2px solid #f5c518; width: 100%; max-width: 500px;",
+            style: "margin-top: 32px; padding: 24px; background: #1a0a2e; border-radius: 12px; border: 2px solid #ff2d78; width: 100%; max-width: 500px;",
 
             h2 {
-                style: "text-align: center; color: #f5c518; margin-bottom: 16px;",
-                "Soul Slot Machine"
+                style: "text-align: center; color: #ff2d78; margin-bottom: 16px; text-shadow: 0 0 8px rgba(255,45,120,0.4);",
+                "Slot Machine"
             }
 
             BetSelector { bet: bet.clone() }
@@ -39,9 +39,9 @@ pub fn SlotMachine() -> Element {
                         });
                     },
                     style: if can_spin {
-                        "background: #f5c518; color: #1a1a2e; border: none; padding: 12px 40px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer;"
+                        "background: #ff2d78; color: #f0e6ff; border: none; padding: 12px 40px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px rgba(255,45,120,0.5);"
                     } else {
-                        "background: #333; color: #666; border: none; padding: 12px 40px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: not-allowed;"
+                        "background: #3a2a5e; color: #666; border: none; padding: 12px 40px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: not-allowed;"
                     },
                     "SPIN"
                 }
@@ -59,14 +59,14 @@ fn BetSelector(bet: Signal<u32>) -> Element {
             class: "bet-selector",
             style: "display: flex; justify-content: center; gap: 8px; margin-bottom: 16px;",
               for amount in [1, 2, 3] {
-                button {
+                  button {
                     onclick: move |_| {
                         *bet.write() = amount;
                     },
                     style: if *bet.read() == amount {
-                        "background: #e94560; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;"
+                        "background: #ff2d78; color: #f0e6ff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;"
                     } else {
-                        "background: #16213e; color: #f5c518; border: 1px solid #f5c518; padding: 8px 20px; border-radius: 6px; cursor: pointer;"
+                        "background: #2a1a4e; color: #00f5d4; border: 1px solid #ff2d78; padding: 8px 20px; border-radius: 6px; cursor: pointer;"
                     },
                     "{coin_label(amount)}"
                 }
@@ -91,7 +91,7 @@ fn Reels(spin_result: Option<SpinResult>) -> Element {
     rsx! {
         div {
             class: "reels-container",
-            style: "display: flex; justify-content: center; gap: 8px; padding: 16px; background: #1a1a2e; border-radius: 8px;",
+            style: "display: flex; justify-content: center; gap: 8px; padding: 16px; background: #0f0520; border-radius: 8px;",
             for col in 0..3 {
                 ReelColumn { col, reels: reels.clone(), spin_result: spin_result.clone() }
             }
@@ -125,9 +125,9 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         .map(|row| {
             let is_winning_cell = winning_row == Some(row);
             let cell_style = if is_grayed && is_winning_cell {
-                "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #16213e; border-radius: 6px; font-size: 2rem; filter: grayscale(100%) brightness(50%); opacity: 0.5;"
+                "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #2a1a4e; border-radius: 6px; font-size: 2rem; filter: grayscale(100%) brightness(50%); opacity: 0.5;"
             } else {
-                "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #16213e; border-radius: 6px; font-size: 2rem;"
+                "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #2a1a4e; border-radius: 6px; font-size: 2rem;"
             };
             let emoji = symbol_to_emoji(&reels[col][row]).to_string();
             ReelCell { cell_style, emoji }
@@ -159,7 +159,7 @@ fn SpinResultDisplay(spin_result: Option<SpinResult>) -> Element {
                 Some(r) => if r.payout_coins > 0 {
                     rsx! {
                         p {
-                            style: "color: #f5c518; font-size: 1.3rem; font-weight: bold;",
+                            style: "color: #00f5d4; font-size: 1.3rem; font-weight: bold;",
                             "Win! +{r.payout_coins} coins"
                         }
                         if r.grayed_high_tier {
@@ -172,14 +172,14 @@ fn SpinResultDisplay(spin_result: Option<SpinResult>) -> Element {
                 } else if r.is_near_miss {
                     rsx! {
                         p {
-                            style: "color: #e94560; font-size: 1rem;",
+                            style: "color: #ff2d78; font-size: 1rem;",
                             "So close..."
                         }
                     }
                 } else {
                     rsx! {
                         p {
-                            style: "color: #666; font-size: 0.9rem;",
+                            style: "color: #7a6a9e; font-size: 0.9rem;",
                             "No luck. Try again!"
                         }
                     }

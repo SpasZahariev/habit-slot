@@ -114,10 +114,10 @@ pub enum CalendarColor {
 impl CalendarColor {
     pub fn hex(&self) -> &'static str {
         match self {
-            CalendarColor::Empty => "#1a1a2e",
-            CalendarColor::Low => "#16213e",
-            CalendarColor::Mid => "#e94560",
-            CalendarColor::High => "#f5c518",
+            CalendarColor::Empty => "#0f0520",
+            CalendarColor::Low => "#2a1a4e",
+            CalendarColor::Mid => "#ff2d78",
+            CalendarColor::High => "#00f5d4",
         }
     }
 }

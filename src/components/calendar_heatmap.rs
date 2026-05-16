@@ -70,7 +70,7 @@ pub fn CalendarHeatmap(habit: Habit) -> Element {
                      font-size: 0.7rem; color: #ccc; cursor: default; {}",
                     color.hex(),
                     if is_today {
-                        "border: 2px solid #f5c518;"
+                        "border: 2px solid #00f5d4;"
                     } else {
                         ""
                     }
@@ -84,24 +84,24 @@ pub fn CalendarHeatmap(habit: Habit) -> Element {
     rsx! {
         div {
             class: "calendar-heatmap",
-            style: "margin-top: 12px; background: #0d1117; border-radius: 8px; padding: 12px;",
+            style: "margin-top: 12px; background: #0f0520; border-radius: 8px; padding: 12px;",
 
             div {
                 style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;",
                 button {
                     onclick: prev_month.clone(),
-                    style: "background: none; border: 1px solid #f5c518; color: #f5c518; padding: 4px 12px; border-radius: 4px; cursor: pointer;",
+                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer;",
                     "← Prev"
                 }
 
                 span {
-                    style: "font-size: 0.95rem; color: #f5c518; font-weight: bold;",
+                    style: "font-size: 0.95rem; color: #ff2d78; font-weight: bold;",
                     "{month_name} {current_year}"
                 }
 
                 button {
                     onclick: next_month.clone(),
-                    style: "background: none; border: 1px solid #f5c518; color: #f5c518; padding: 4px 12px; border-radius: 4px; cursor: pointer;",
+                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer;",
                     "Next →"
                 }
             }
@@ -112,7 +112,7 @@ pub fn CalendarHeatmap(habit: Habit) -> Element {
 
                 for day_name in ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] {
                     div {
-                        style: "text-align: center; font-size: 0.7rem; color: #888; padding: 4px 0;",
+                        style: "text-align: center; font-size: 0.7rem; color: #b8a9d4; padding: 4px 0;",
                         "{day_name}"
                     }
                 }
@@ -133,7 +133,7 @@ pub fn CalendarHeatmap(habit: Habit) -> Element {
 
             div {
                 class: "calendar-legend",
-                style: "display: flex; gap: 8px; margin-top: 8px; font-size: 0.7rem; color: #888;",
+                style: "display: flex; gap: 8px; margin-top: 8px; font-size: 0.7rem; color: #b8a9d4;",
 
                 span { "Streak:" }
                 ColorSwatch { color: CalendarColor::Empty, label: "-" }
