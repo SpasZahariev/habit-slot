@@ -1,5 +1,6 @@
 use crate::state::AppState;
 use dioxus::prelude::*;
+use habit_slot::models::ToastMessage;
 use std::time::Duration;
 
 #[component]
@@ -20,13 +21,13 @@ pub fn ToastContainer() -> Element {
     let toasts = app_state.read().toasts.clone();
 
     if toasts.is_empty() {
-        return None;
+        return VNode::empty();
     }
 
     rsx! {
         div {
             class: "toast-container fixed top-0 left-0 right-0 z-50 flex flex-col items-center pointer-events-none px-4 pt-2",
-            for (toast, _index) in toasts.iter().enumerate() {
+            for toast in toasts {
                 ToastBanner { toast }
             }
         }
@@ -34,7 +35,7 @@ pub fn ToastContainer() -> Element {
 }
 
 #[component]
-fn ToastBanner(toast: crate::state::ToastMessage) -> Element {
+fn ToastBanner(toast: ToastMessage) -> Element {
     rsx! {
         div {
             class: "toast-banner mt-2 px-6 py-3 bg-[#0f0520] border border-[#ff2d78] rounded-xl shadow-[0_0_20px_rgba(255,45,120,0.4)] flex items-center gap-3 pointer-events-auto",

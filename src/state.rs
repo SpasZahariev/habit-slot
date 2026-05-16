@@ -286,15 +286,6 @@ impl AppState {
         });
     }
 
-    /// Remove toasts older than the configured timeout. Called each render frame.
-    pub fn dismiss_expired_toasts(&mut self) {
-        let now = Instant::now();
-        self.toasts.retain(|t| {
-            now.duration_since(t.created_at)
-                < Duration::from_millis(habit_slot::models::TOAST_TIMEOUT_MS)
-        });
-    }
-
     /// Spend coins for a slot spin bet. Returns true if successful.
     pub fn spend_coins(&mut self, amount: u32, note: String) -> bool {
         let success = economy::spend(&mut self.coin_balance, amount, note);

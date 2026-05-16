@@ -126,7 +126,7 @@ impl CalendarColor {
 }
 
 /// Toast notification message displayed at top-center of screen.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ToastMessage {
     pub symbol_name: String,
     pub payout: u32,
