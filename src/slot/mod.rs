@@ -19,7 +19,7 @@ const SYMBOL_WEIGHTS: &[(SlotSymbol, f64)] = &[
     (SlotSymbol::Pizza, 15.0),
     (SlotSymbol::Sushi, 18.0),
     (SlotSymbol::Sashimi, 12.0),
-    (SlotSymbol::Pancake, 4.0),
+    (SlotSymbol::Pancake, 10.0),
 ];
 
 /// Payout multiplier for 3-of-a-kind matches.
