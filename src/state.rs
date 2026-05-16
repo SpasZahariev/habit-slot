@@ -7,7 +7,8 @@ use uuid::Uuid;
 
 use habit_slot::economy;
 use habit_slot::models::{
-    CoinBalance, Completion, Habit, PityCounter, RewardPool, SpinResult, StreakData, ToastMessage,
+    CoinBalance, Completion, Habit, PityCounter, RewardPool, SlotSymbol, SpinResult, StreakData,
+    ToastMessage,
 };
 use habit_slot::rewards::{self, MilestoneTracker};
 use habit_slot::slot;
@@ -38,6 +39,12 @@ pub struct AppState {
     pub milestone_trackers: HashMap<Uuid, MilestoneTracker>,
     /// Active toast notifications queued FIFO.
     pub toasts: Vec<ToastMessage>,
+    /// Reels are currently animating.
+    pub is_spinning: bool,
+    /// Animation strips for each reel column during spin. Each strip contains filler + result symbols.
+    pub animation_strips: Option<[Vec<SlotSymbol>; 3]>,
+    /// Number of reels that have finished their staggered animation (0..3).
+    pub reels_stopped: u8,
     #[cfg(feature = "db")]
     pub db: Option<Rc<habit_slot::db::Db>>,
 }
@@ -53,6 +60,9 @@ impl Default for AppState {
             last_spin_result: None,
             milestone_trackers: HashMap::new(),
             toasts: vec![],
+            is_spinning: false,
+            animation_strips: None,
+            reels_stopped: 0,
             #[cfg(feature = "db")]
             db: None,
         }
@@ -86,6 +96,9 @@ impl AppState {
             last_spin_result: None,
             milestone_trackers,
             toasts: vec![],
+            is_spinning: false,
+            animation_strips: None,
+            reels_stopped: 0,
             db: None,
         })
     }
@@ -305,6 +318,7 @@ impl AppState {
 
     /// Execute a slot spin with integrated pity tracking and economy.
     /// Deducts bet, resolves spin, credits winnings. Returns the SpinResult.
+    /// Prepares animation strips for reel animation.
     pub fn execute_spin(&mut self, bet: u32) -> Option<SpinResult> {
         let tx_before = self.coin_balance.transactions.len();
         if !economy::spend(&mut self.coin_balance, bet, format!("Bet {} coins", bet)) {
@@ -335,8 +349,37 @@ impl AppState {
             self.persist_pity_counter();
         }
 
+        // Prepare animation strips before revealing result
+        self.prepare_animation(&result);
+
         self.last_spin_result = Some(result.clone());
         self.last_spin_result.clone()
+    }
+
+    /// Prepare animation strips for a spin result. Called before reels start animating.
+    pub fn prepare_animation(&mut self, spin_result: &SpinResult) {
+        self.animation_strips = Some(slot::generate_all_animation_strips(spin_result));
+        self.is_spinning = true;
+        self.reels_stopped = 0;
+    }
+
+    /// Mark one reel as stopped. When all 3 are done, clear animation state.
+    pub fn stop_one_reel(&mut self) {
+        if self.is_spinning {
+            self.reels_stopped += 1;
+            if self.reels_stopped >= 3 {
+                self.is_spinning = false;
+                self.animation_strips = None;
+                self.reels_stopped = 0;
+            }
+        }
+    }
+
+    /// Reset animation state (e.g., on new spin or cancel).
+    pub fn reset_animation(&mut self) {
+        self.is_spinning = false;
+        self.animation_strips = None;
+        self.reels_stopped = 0;
     }
 }
 

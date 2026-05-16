@@ -310,6 +310,34 @@ pub fn exact_match_probability(symbol: SlotSymbol) -> f64 {
     p * p * p
 }
 
+/// Number of filler symbols before the result in each reel animation strip.
+pub const ANIMATION_FILLER_COUNT: usize = 12;
+
+/// Generate an animation strip for a single reel column.
+/// Returns ~`ANIMATION_FILLER_COUNT` weighted random filler symbols followed by the 3 result symbols.
+/// The final 3 symbols match the SpinResult reel column exactly.
+pub fn generate_animation_strip(
+    rng: &mut impl Rng,
+    result_column: [SlotSymbol; 3],
+) -> Vec<SlotSymbol> {
+    let mut strip = Vec::with_capacity(ANIMATION_FILLER_COUNT + 3);
+    for _ in 0..ANIMATION_FILLER_COUNT {
+        strip.push(roll_symbol(rng));
+    }
+    strip.extend_from_slice(&result_column);
+    strip
+}
+
+/// Generate all 3 reel animation strips from a SpinResult.
+pub fn generate_all_animation_strips(result: &SpinResult) -> [Vec<SlotSymbol>; 3] {
+    let mut rng = thread_rng();
+    [
+        generate_animation_strip(&mut rng, result.reels[0]),
+        generate_animation_strip(&mut rng, result.reels[1]),
+        generate_animation_strip(&mut rng, result.reels[2]),
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -662,5 +690,125 @@ mod tests {
         let result = resolve_reels(reels, 1);
         // Kebab matched on row 0 (low-tier), high-tier symbols don't match -> no gray
         assert!(!result.grayed_high_tier);
+    }
+
+    #[test]
+    fn animation_strip_length_is_filler_plus_3() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let result_column = [SlotSymbol::Kebab, SlotSymbol::Taco, SlotSymbol::Pizza];
+        let strip = generate_animation_strip(&mut rng, result_column);
+
+        assert_eq!(
+            strip.len(),
+            ANIMATION_FILLER_COUNT + 3,
+            "strip should be {} symbols",
+            ANIMATION_FILLER_COUNT + 3
+        );
+    }
+
+    #[test]
+    fn animation_strip_final_three_match_result() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let result_column = [SlotSymbol::Sushi, SlotSymbol::Pancake, SlotSymbol::Kebab];
+        let strip = generate_animation_strip(&mut rng, result_column);
+
+        assert_eq!(strip[12], SlotSymbol::Sushi);
+        assert_eq!(strip[13], SlotSymbol::Pancake);
+        assert_eq!(strip[14], SlotSymbol::Kebab);
+    }
+
+    #[test]
+    fn animation_strip_filler_distribution_matches_weights() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let result_column = [SlotSymbol::Kebab; 3];
+        let mut counts = [
+            (SlotSymbol::Kebab, 0u32),
+            (SlotSymbol::Taco, 0),
+            (SlotSymbol::Pizza, 0),
+            (SlotSymbol::Sushi, 0),
+            (SlotSymbol::Sashimi, 0),
+            (SlotSymbol::Pancake, 0),
+        ];
+
+        let symbols = [
+            SlotSymbol::Kebab,
+            SlotSymbol::Taco,
+            SlotSymbol::Pizza,
+            SlotSymbol::Sushi,
+            SlotSymbol::Sashimi,
+            SlotSymbol::Pancake,
+        ];
+
+        for _ in 0..1000 {
+            let strip = generate_animation_strip(&mut rng, result_column);
+            for sym in &strip[..ANIMATION_FILLER_COUNT] {
+                for entry in &mut counts {
+                    if entry.0 == *sym {
+                        entry.1 += 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        let total_fillers: u32 = counts.iter().map(|(_, c)| c).sum();
+        for (symbol, count) in &counts {
+            let observed = *count as f64 / total_fillers as f64;
+            let expected = symbol_probability(*symbol);
+            assert!(
+                (observed - expected).abs() < TOLERANCE * 2.0,
+                "{:?}: observed {:.3}, expected {:.3}",
+                symbol,
+                observed,
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn generate_all_strips_produces_three_strips() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Kebab, SlotSymbol::Taco, SlotSymbol::Pizza],
+            [SlotSymbol::Sushi, SlotSymbol::Kebab, SlotSymbol::Pancake],
+            [SlotSymbol::Taco, SlotSymbol::Sashimi, SlotSymbol::Kebab],
+        ];
+        let result = SpinResult {
+            reels,
+            symbols_matched: None,
+            tier: RewardTier::None,
+            payout_coins: 0,
+            is_near_miss: false,
+            grayed_high_tier: false,
+        };
+
+        let strips = generate_all_animation_strips(&result);
+        assert_eq!(strips.len(), 3);
+        for strip in &strips {
+            assert_eq!(strip.len(), ANIMATION_FILLER_COUNT + 3);
+        }
+    }
+
+    #[test]
+    fn generate_all_strips_final_symbols_match_reels() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Pancake, SlotSymbol::Sushi, SlotSymbol::Kebab],
+            [SlotSymbol::Taco, SlotSymbol::Pizza, SlotSymbol::Sashimi],
+            [SlotSymbol::Kebab, SlotSymbol::Taco, SlotSymbol::Pancake],
+        ];
+        let result = SpinResult {
+            reels,
+            symbols_matched: None,
+            tier: RewardTier::None,
+            payout_coins: 0,
+            is_near_miss: false,
+            grayed_high_tier: false,
+        };
+
+        let strips = generate_all_animation_strips(&result);
+        for col in 0..3 {
+            assert_eq!(strips[col][12], reels[col][0]);
+            assert_eq!(strips[col][13], reels[col][1]);
+            assert_eq!(strips[col][14], reels[col][2]);
+        }
     }
 }
