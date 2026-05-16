@@ -93,6 +93,16 @@
 - Old inline HabitForm removed from main.rs (replaced by navigation)
 - All 49 existing tests pass
 
+## Issue #21: Simplify slot machine — hide bet selector, hardcode bet=1 ✓ DONE
+
+- BetSelector component removed from SlotMachine rsx!
+- SPIN button onclick hardcodes bet to 1 (`execute_spin(1)`)
+- All underlying slot logic (grayed symbols, pity mechanic, payout scaling) preserved unchanged
+- `bet` signal and `coin_label` helper removed from slot_machine.rs
+- Vaporwave styling already applied (from Issue #19)
+- All 58 tests pass (`cargo test --features db`)
+- `cargo check` compiles with no errors
+
 ## Issue #19: Global styles, white border fix, rename to Habit Slot — IN PROGRESS
 
 ### What's done so far:

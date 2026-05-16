@@ -1,3 +1,4 @@
+use crate::components::AgisAnimation;
 use crate::state::AppState;
 use dioxus::prelude::*;
 
@@ -17,6 +18,8 @@ pub fn HomePage() -> Element {
                     class: "text-title mb-2 text-[#ff2d78] drop-shadow-[0_0_10px_rgba(255,45,120,0.5)]",
                     "Habit Slot"
                 }
+
+                AgisAnimation {}
 
                 button {
                     class: "nav-button w-full max-w-xs py-btn-padding text-btn-lg font-bold bg-[#ff2d78] text-[#f0e6ff] rounded-xl mb-4 shadow-[0_0_15px_rgba(255,45,120,0.4)] border-none cursor-pointer",

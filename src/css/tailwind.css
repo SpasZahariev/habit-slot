@@ -800,11 +800,6 @@ video {
   padding-right: 1rem;
 }
 
-.px-5 {
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-}
-
 .px-6 {
   padding-left: 1.5rem;
   padding-right: 1.5rem;
@@ -857,8 +852,8 @@ video {
   text-align: center;
 }
 
-.font-\[\'Pixelify_Sans\'\] {
-  font-family: 'Pixelify Sans';
+.font-pixel {
+  font-family: "Pixelify Sans", sans-serif;
 }
 
 .text-2xl {
@@ -1010,16 +1005,4 @@ video {
 
 .filter {
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
-}
-
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-body {
-  font-family: 'Pixelify Sans', sans-serif;
 }

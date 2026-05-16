@@ -7,6 +7,7 @@ module.exports = {
   safelist: [
     'text-6xl',
     'py-6',
+    'font-pixel',
   ],
   theme: {
     extend: {

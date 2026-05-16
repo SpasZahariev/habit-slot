@@ -2405,6 +2405,7 @@ dependencies = [
  "rstest",
  "rusqlite",
  "serde",
+ "tokio",
  "uuid",
 ]
 

@@ -20,11 +20,10 @@ fn App() -> Element {
 
     rsx! {
         Meta { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" }
-        Stylesheet { integrity: "", href: "https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" }
-        style { "{TAILWIND_CSS}" }
+        style { "@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap'); {TAILWIND_CSS}" }
 
         div {
-            class: "flex flex-col min-h-full-vh w-full overflow-x-hidden px-4 py-3 font-['Pixelify_Sans'] bg-gradient-to-b from-[#1a0a2e] to-[#2d1b69] text-[#f0e6ff]",
+            class: "flex flex-col min-h-full-vh w-full overflow-x-hidden px-4 py-3 font-pixel bg-gradient-to-b from-[#1a0a2e] to-[#2d1b69] text-[#f0e6ff]",
 
             if current_page != Page::Home {
                 NavBar {}
