@@ -14,7 +14,7 @@ pub fn SlotMachine() -> Element {
     rsx! {
         div {
             class: "slot-machine",
-            style: "margin-top: 32px; padding: 24px; background: #1a0a2e; border-radius: 12px; border: 2px solid #ff2d78; width: 100%; max-width: 500px;",
+            style: "margin-top: 32px; padding: 16px; background: #1a0a2e; border-radius: 12px; border: 2px solid #ff2d78; width: 96%;",
 
             h2 {
                 style: "text-align: center; color: #ff2d78; margin-bottom: 16px; text-shadow: 0 0 8px rgba(255,45,120,0.4);",
@@ -125,9 +125,9 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         .map(|row| {
             let is_winning_cell = winning_row == Some(row);
             let cell_style = if is_grayed && is_winning_cell {
-                "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #2a1a4e; border-radius: 6px; font-size: 2rem; filter: grayscale(100%) brightness(50%); opacity: 0.5;"
+                "min-width: 70px; height: 50px; display: flex; align-items: center; justify-content: center; background: #2a1a4e; border-radius: 6px; font-size: 1.8rem; filter: grayscale(100%) brightness(50%); opacity: 0.5;"
             } else {
-                "width: 80px; height: 60px; display: flex; align-items: center; justify-content: center; background: #2a1a4e; border-radius: 6px; font-size: 2rem;"
+                "min-width: 70px; height: 50px; display: flex; align-items: center; justify-content: center; background: #2a1a4e; border-radius: 6px; font-size: 1.8rem;"
             };
             let emoji = symbol_to_emoji(&reels[col][row]).to_string();
             ReelCell { cell_style, emoji }

@@ -22,7 +22,7 @@ pub fn HabitList() -> Element {
         return rsx! {
             div {
                 class: "empty-state",
-                style: "text-align: center; padding: 48px 24px; opacity: 0.7; color: #f0e6ff;",
+                style: "text-align: center; padding: 48px 16px; opacity: 0.7; color: #f0e6ff;",
                 p { "No habits yet." }
                 p { "Add your first habit above to start earning soul coins." }
             }
@@ -32,7 +32,7 @@ pub fn HabitList() -> Element {
     rsx! {
           ul {
                 class: "habit-list",
-                style: "list-style: none; padding: 0; margin: 0; width: 100%; max-width: 500px; gap: 8px; display: flex; flex-direction: column;",
+                style: "list-style: none; padding: 0; margin: 0; width: 96%; gap: 8px; display: flex; flex-direction: column;",
             for habit in habits {
                 HabitItem {
                     habit,
