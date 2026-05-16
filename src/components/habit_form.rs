@@ -16,23 +16,20 @@ pub fn HabitForm() -> Element {
                     name.set(String::new());
                 }
             },
-            class: "habit-form",
-            style: "display: flex; gap: 8px; margin-bottom: 24px; width: 96%;",
+            class: "habit-form flex gap-2 mb-6 w-[96%]",
 
             input {
                 r#type: "text",
                 placeholder: "New habit...",
                 value: &*name.read(),
                 oninput: move |e| name.set(e.value().to_string()),
-                class: "habit-input",
-                style: "flex: 1; padding: 12px; border: 1px solid #ff2d78; border-radius: 8px; background: #2a1a4e; color: #f0e6ff; font-size: 1rem;",
+                class: "habit-input flex-1 px-3 py-3 border border-[#ff2d78] rounded-lg bg-[#2a1a4e] text-[#f0e6ff] text-base",
             }
 
             button {
                 r#type: "submit",
                 disabled: name.read().trim().is_empty(),
-                class: "habit-submit",
-                style: "padding: 12px 24px; border: none; border-radius: 8px; background: #ff2d78; color: #f0e6ff; font-weight: bold; cursor: pointer; font-size: 1rem;",
+                class: "habit-submit px-6 py-3 border-none rounded-lg bg-[#ff2d78] text-[#f0e6ff] font-bold cursor-pointer text-base",
                 "Add"
             }
         }

@@ -21,18 +21,16 @@ pub fn HabitList() -> Element {
     if habits.is_empty() {
         return rsx! {
             div {
-                class: "empty-state",
-                style: "text-align: center; padding: 48px 16px; opacity: 0.7; color: #f0e6ff;",
+                class: "empty-state text-center px-4 py-12 opacity-70 text-[#f0e6ff]",
                 p { "No habits yet." }
-                p { "Add your first habit above to start earning soul coins." }
+                p { "Add your first habit above to start earning coins." }
             }
         };
     }
 
     rsx! {
-          ul {
-                class: "habit-list",
-                style: "list-style: none; padding: 0; margin: 0; width: 96%; gap: 8px; display: flex; flex-direction: column;",
+        ul {
+            class: "habit-list list-none w-[96%] gap-2 flex flex-col",
             for habit in habits {
                 HabitItem {
                     habit,
@@ -79,66 +77,55 @@ pub fn HabitItem(habit: Habit, expanded_calendars: Signal<HashMap<Uuid, bool>>) 
 
     rsx! {
         li {
-            class: "habit-item",
-            style: "display: flex; flex-direction: column; justify-content: space-between; padding: 16px; margin-bottom: 8px; background: #2a1a4e; border-radius: 8px; border: 1px solid rgba(255,45,120,0.2);",
+            class: "habit-item flex flex-col justify-between p-4 mb-2 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)]",
 
             div {
-                style: "display: flex; justify-content: space-between; align-items: center;",
+                class: "flex justify-between items-center",
 
                 div {
                     strong {
-                        style: "font-size: 1.1rem; color: #00f5d4;",
+                        class: "text-[1.1rem] text-[#00f5d4]",
                         "{&habit.name}"
                     }
                     br {}
                     span {
-                        class: "habit-date",
-                        style: "font-size: 0.85rem; opacity: 0.6; color: #f0e6ff;",
+                        class: "habit-date text-[0.85rem] opacity-60 text-[#f0e6ff]",
                         "Created {format_date(&habit.created_at)}"
                     }
                     br {}
                     span {
-                        class: "milestone-progress",
-                        style: "font-size: 0.75rem; color: #b8a9d4; margin-top: 4px;",
+                        class: "milestone-progress text-[0.75rem] text-[#b8a9d4] mt-1",
                         "{streak_goal_text} | {completion_goal_text}"
                     }
                 }
 
                 div {
-                    style: "display: flex; gap: 8px; align-items: center;",
+                    class: "flex gap-2 items-center",
 
                     span {
-                        class: "habit-streak",
-                        style: "font-size: 0.9rem; color: #ff2d78;",
+                        class: "habit-streak text-sm text-[#ff2d78]",
                         "{streak} fire"
                     }
 
                     button {
-                        class: "habit-toggle",
+                        class: format!("habit-toggle border-none rounded-md cursor-pointer px-4 py-2 {}", if completed { "bg-[#ff2d78] text-[#f0e6ff]" } else { "border border-[#00f5d4] text-[#00f5d4] bg-transparent" }),
                         onclick: move |_| {
                             let _ = app_state.write().toggle_completion(habit.id);
-                        },
-                        style: if completed {
-                            "background: #ff2d78; border: none; color: #f0e6ff; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
-                        } else {
-                            "background: none; border: 1px solid #00f5d4; color: #00f5d4; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
                         },
                         "{btn_label}"
                     }
 
                     button {
-                        class: "habit-calendar-toggle",
+                        class: "habit-calendar-toggle border rounded-md cursor-pointer text-xs px-2 py-1 border-[#7a6a9e] text-[#b8a9d4] bg-transparent",
                         onclick: toggle_calendar,
-                        style: "background: none; border: 1px solid #7a6a9e; color: #b8a9d4; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;",
                         if is_expanded { "Hide" } else { "Calendar" }
                     }
 
                     button {
-                        class: "habit-delete",
+                        class: "habit-delete border rounded-md cursor-pointer px-3 py-1 border-[#ff2d78] text-[#ff2d78] bg-transparent",
                         onclick: move |_| {
                             app_state.write().remove_habit(habit.id);
                         },
-                        style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 6px; cursor: pointer;",
                         "X"
                     }
                 }

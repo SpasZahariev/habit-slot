@@ -5,11 +5,11 @@ use crate::components::{HabitForm, HabitList, SlotMachine};
 use crate::state::use_app_state;
 use dioxus::prelude::*;
 
+const TAILWIND_CSS: &str = include_str!("./css/tailwind.css");
+
 fn main() {
     launch(App);
 }
-
-const GLOBAL_CSS: &str = "html,body{margin:0!important;padding:0!important;overflow:hidden!important;width:100%!important;height:100%!important;background:#1a0a2e!important}body{font-family:'Pixelify Sans',sans-serif!important}*{box-sizing:border-box!important}";
 
 fn App() -> Element {
     let app_state = use_app_state();
@@ -19,20 +19,18 @@ fn App() -> Element {
     rsx! {
         Meta { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" }
         Stylesheet { integrity: "", href: "https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" }
-        script { r#"document.documentElement.style.margin='0';document.documentElement.style.padding='0';document.body.style.margin='0';document.body.style.padding='0';"# }
+        style { "{TAILWIND_CSS}" }
 
         div {
-            class: "app",
-            style: "display: flex; flex-direction: column; align-items: center; min-height: 100dvh; width: 100%; overflow-x: hidden; margin: 0 auto; padding: 12px 0; background: linear-gradient(180deg, #1a0a2e, #2d1b69); color: #f0e6ff; font-family: 'Pixelify Sans', sans-serif;",
+            class: "flex flex-col items-center min-h-[100dvh] w-full overflow-x-hidden px-4 py-3 font-['Pixelify_Sans'] bg-gradient-to-b from-[#1a0a2e] to-[#2d1b69] text-[#f0e6ff]",
 
             h1 {
-                style: "font-size: 2rem; margin-bottom: 24px; color: #ff2d78; text-shadow: 0 0 10px rgba(255,45,120,0.5);",
+                class: "text-3xl mb-6 text-[#ff2d78] drop-shadow-[0_0_10px_rgba(255,45,120,0.5)]",
                 "Habit Slot"
             }
 
             div {
-                class: "coin-balance",
-                style: "font-size: 1.2rem; margin-bottom: 24px; color: #00f5d4;",
+                class: "text-xl mb-6 text-[#00f5d4]",
                 "{app_state.read().coin_balance.balance} coins"
             }
 
