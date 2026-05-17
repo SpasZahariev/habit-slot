@@ -44,3 +44,4 @@ Next: Begin with Slice 2 (Issue #38)
 
 - [x] Issue #41: PRD: Slot Reward Overhaul - Habit Rewards, Coin Refunds, Probability Tuning — DONE
 - [x] Issue #42: Slice: SpinResult types + GlobalReward selection support — DONE
+- [x] Issue #43: Slice: Core slot engine - probability recalibration + reward resolution — DONE
