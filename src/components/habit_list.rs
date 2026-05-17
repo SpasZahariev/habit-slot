@@ -44,9 +44,8 @@ pub fn HabitList() -> Element {
 #[component]
 pub fn HabitItem(habit: Habit, expanded_calendars: Signal<HashMap<Uuid, bool>>) -> Element {
     let mut app_state = use_context::<Signal<AppState>>();
-    let completed = app_state.read().is_completed_today(habit.id);
+    let today_count = app_state.read().get_today_count(habit.id);
     let streak = app_state.read().get_streak(habit.id).current_streak_days;
-    let btn_label = if completed { "Done" } else { "Do it" };
 
     let is_expanded = expanded_calendars
         .read()
@@ -64,76 +63,71 @@ pub fn HabitItem(habit: Habit, expanded_calendars: Signal<HashMap<Uuid, bool>>) 
         "Streak: {}/{}",
         streak, milestone_progress.next_streak_goal.0
     );
-    let total_completions = app_state
-        .read()
-        .completions
-        .iter()
-        .filter(|c| c.habit_id == habit.id)
-        .count();
+    let total_completions = app_state.read().get_total_completions(habit.id);
     let completion_goal_text = format!(
         "Tasks: {}/{}",
         total_completions, milestone_progress.next_completion_goal.0
     );
 
     rsx! {
-        li {
-            class: "habit-item flex flex-col justify-between p-4 mb-2 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)]",
+           li {
+               class: "habit-item flex flex-col justify-between p-4 mb-2 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)]",
 
-            div {
-                class: "flex justify-between items-center",
+               div {
+                   class: "flex justify-between items-center",
 
-                div {
-                    strong {
-                        class: "text-[1.1rem] text-[#00f5d4]",
-                        "{&habit.name}"
-                    }
-                    br {}
-                    span {
-                        class: "habit-date text-[0.85rem] opacity-60 text-[#f0e6ff]",
-                        "Created {format_date(&habit.created_at)}"
-                    }
-                    br {}
-                    span {
-                        class: "milestone-progress text-[0.75rem] text-[#b8a9d4] mt-1",
-                        "{streak_goal_text} | {completion_goal_text}"
-                    }
-                }
+                   div {
+                       strong {
+                           class: "text-[1.1rem] text-[#00f5d4]",
+                           "{&habit.name}"
+                       }
+                       br {}
+                       span {
+                           class: "habit-date text-[0.85rem] opacity-60 text-[#f0e6ff]",
+                           "Created {format_date(&habit.created_at)}"
+                       }
+                       br {}
+                       span {
+                           class: "milestone-progress text-[0.75rem] text-[#b8a9d4] mt-1",
+                           "{streak_goal_text} | {completion_goal_text}"
+                       }
+                   }
 
-                div {
-                    class: "flex gap-2 items-center",
+    div {
+                           class: "flex gap-2 items-center",
 
-                    span {
-                        class: "habit-streak text-sm text-[#ff2d78]",
-                        "{streak} fire"
-                    }
+                           span {
+                               class: "habit-streak text-sm text-[#ff2d78]",
+                               "{streak} fire"
+                           }
 
-                    button {
-                        class: format!("habit-toggle border-none rounded-md cursor-pointer px-4 py-2 {}", if completed { "bg-[#ff2d78] text-[#f0e6ff]" } else { "border border-[#00f5d4] text-[#00f5d4] bg-transparent" }),
-                        onclick: move |_| {
-                            let _ = app_state.write().toggle_completion(habit.id);
-                        },
-                        "{btn_label}"
-                    }
+                           button {
+                               class: "habit-toggle border-none rounded-md cursor-pointer px-4 py-2 bg-[#00f5d4] text-[#1a1a2e] font-bold",
+                               onclick: move |_| {
+                                   app_state.write().increment_habit_completion(habit.id);
+                               },
+                               "+"
+                           }
 
-                    button {
-                        class: "habit-calendar-toggle border rounded-md cursor-pointer text-xs px-2 py-1 border-[#7a6a9e] text-[#b8a9d4] bg-transparent",
-                        onclick: toggle_calendar,
-                        if is_expanded { "Hide" } else { "Calendar" }
-                    }
+                       button {
+                           class: "habit-calendar-toggle border rounded-md cursor-pointer text-xs px-2 py-1 border-[#7a6a9e] text-[#b8a9d4] bg-transparent",
+                           onclick: toggle_calendar,
+                           if is_expanded { "Hide" } else { "Calendar" }
+                       }
 
-                    button {
-                        class: "habit-delete border rounded-md cursor-pointer px-3 py-1 border-[#ff2d78] text-[#ff2d78] bg-transparent",
-                        onclick: move |_| {
-                            app_state.write().remove_habit(habit.id);
-                        },
-                        "X"
-                    }
-                }
-            }
+                       button {
+                           class: "habit-delete border rounded-md cursor-pointer px-3 py-1 border-[#ff2d78] text-[#ff2d78] bg-transparent",
+                           onclick: move |_| {
+                               app_state.write().remove_habit(habit.id);
+                           },
+                           "X"
+                       }
+                   }
+               }
 
-            if is_expanded {
-                CalendarHeatmap { habit: habit.clone() }
-            }
-        }
-    }
+               if is_expanded {
+                   CalendarHeatmap { habit: habit.clone() }
+               }
+           }
+       }
 }

@@ -145,22 +145,29 @@ impl AppState {
 }
 
 impl AppState {
-    pub fn add_habit(&mut self, name: String) {
+    pub fn add_habit(&mut self, name: String, target_days: u32) {
         let habit = Habit {
             id: Uuid::new_v4(),
             name,
             created_at: chrono::Utc::now().naive_utc().date(),
             reward_pool: RewardPool::default(),
+            target_days,
+            longest_streak: 0,
         };
         let id = habit.id;
-        let _created_at = habit.created_at;
+        let created_at = habit.created_at;
         self.milestone_trackers
             .insert(id, MilestoneTracker::default());
         self.habits.push(habit);
 
         #[cfg(feature = "db")]
         if let Some(db) = &self.db {
-            let _ = db.insert_habit(id, &self.habits.last().unwrap().name, created_at);
+            let _ = db.insert_habit(
+                id,
+                &self.habits.last().unwrap().name,
+                created_at,
+                target_days,
+            );
         }
     }
 
@@ -174,81 +181,113 @@ impl AppState {
         self.milestone_trackers.remove(&id);
     }
 
-    /// Toggle completion for a habit today. Returns true if just completed (was pending).
-    pub fn toggle_completion(&mut self, habit_id: Uuid) -> bool {
+    /// Increment completion for a habit today. Always additive, no toggle/undo.
+    pub fn increment_habit_completion(&mut self, habit_id: Uuid) {
         let today = chrono::Utc::now().naive_utc().date();
-        let already_done = self
+
+        // Find existing completion for today or create new one
+        let existing_idx = self
             .completions
             .iter()
-            .any(|c| c.habit_id == habit_id && c.date == today);
+            .position(|c| c.habit_id == habit_id && c.date == today);
 
-        if already_done {
-            // Undo completion — remove today's entry
-            #[cfg(feature = "db")]
-            if let Some(db) = &self.db {
-                let _ = db.delete_completion(habit_id, today);
-            }
-            self.completions
-                .retain(|c| !(c.habit_id == habit_id && c.date == today));
-            false
+        let new_count = if let Some(idx) = existing_idx {
+            self.completions[idx].count += 1;
+            self.completions[idx].count
         } else {
-            // Complete: record and award coins
-            #[cfg(feature = "db")]
-            if let Some(db) = &self.db {
-                let _ = db.insert_completion(habit_id, today);
-            }
-
-            let streak = streaks::compute_streak(habit_id, &self.completions);
-            let new_streak = if streak.current_streak_days == 0 {
-                1
-            } else {
-                streak.current_streak_days + 1
-            };
-
             self.completions.push(Completion {
                 habit_id,
                 date: today,
+                count: 1,
             });
+            1
+        };
 
-            let _tx_count_before = self.coin_balance.transactions.len();
-            economy::on_complete(&mut self.coin_balance, new_streak);
-            #[cfg(feature = "db")]
-            self.persist_new_transactions(tx_count_before);
-
-            // Check milestones
-            let total_completions = self
-                .completions
-                .iter()
-                .filter(|c| c.habit_id == habit_id)
-                .count() as u32;
-
-            if let Some(tracker) = self.milestone_trackers.get_mut(&habit_id) {
-                let milestone_result =
-                    rewards::check_milestones(tracker, new_streak, total_completions);
-                if let Some(kind) = milestone_result.newly_claimed {
-                    // Award bonus coins for milestone claim based on tier
-                    let tier = rewards::get_milestone_tier(kind);
-                    let bonus = match tier {
-                        habit_slot::models::RewardTier::Small => 5,
-                        habit_slot::models::RewardTier::Medium => 10,
-                        habit_slot::models::RewardTier::Jackpot => 25,
-                        habit_slot::models::RewardTier::ExtraRoll
-                        | habit_slot::models::RewardTier::None => 0,
-                    };
-                    if bonus > 0 {
-                        economy::earn(
-                            &mut self.coin_balance,
-                            bonus as u32,
-                            format!("Milestone: {:?}", kind),
-                        );
-                    }
-                }
-                #[cfg(feature = "db")]
-                self.persist_milestone_tracker(habit_id);
-            }
-
-            true
+        // Persist increment to DB
+        #[cfg(feature = "db")]
+        if let Some(db) = &self.db {
+            let _ = db.increment_completion(habit_id, today);
         }
+
+        // Compute streak
+        let streak = streaks::compute_streak(habit_id, &self.completions);
+        let current_streak = if existing_idx.is_none() && streak.current_streak_days == 0 {
+            1
+        } else {
+            streak.current_streak_days.max(1)
+        };
+
+        // Award flat 1 coin per tick
+        let tx_count_before = self.coin_balance.transactions.len();
+        economy::on_habit_tick(&mut self.coin_balance);
+        #[cfg(feature = "db")]
+        self.persist_new_transactions(tx_count_before);
+
+        // Update longest streak if current exceeds it
+        if let Some(habit) = self.habits.iter_mut().find(|h| h.id == habit_id) {
+            if current_streak > habit.longest_streak {
+                habit.longest_streak = current_streak;
+                #[cfg(feature = "db")]
+                if let Some(db) = &self.db {
+                    let _ = db.update_longest_streak(habit_id, current_streak);
+                }
+            }
+        }
+
+        // Check milestones
+        let total_completions = self.get_total_completions(habit_id);
+
+        if let Some(tracker) = self.milestone_trackers.get_mut(&habit_id) {
+            let milestone_result =
+                rewards::check_milestones(tracker, current_streak, total_completions);
+            if let Some(kind) = milestone_result.newly_claimed {
+                // Award bonus coins for milestone claim based on tier
+                let tier = rewards::get_milestone_tier(kind);
+                let bonus = match tier {
+                    habit_slot::models::RewardTier::Small => 5,
+                    habit_slot::models::RewardTier::Medium => 10,
+                    habit_slot::models::RewardTier::Jackpot => 25,
+                    habit_slot::models::RewardTier::ExtraRoll
+                    | habit_slot::models::RewardTier::None => 0,
+                };
+                if bonus > 0 {
+                    economy::earn(
+                        &mut self.coin_balance,
+                        bonus as u32,
+                        format!("Milestone: {:?}", kind),
+                    );
+                }
+            }
+            #[cfg(feature = "db")]
+            self.persist_milestone_tracker(habit_id);
+        }
+    }
+
+    /// Get today's completion count for a habit.
+    pub fn get_today_count(&self, habit_id: Uuid) -> u32 {
+        let today = chrono::Utc::now().naive_utc().date();
+        self.completions
+            .iter()
+            .find(|c| c.habit_id == habit_id && c.date == today)
+            .map(|c| c.count)
+            .unwrap_or(0)
+    }
+
+    /// Get total lifetime completion count (sum of all counts) for a habit.
+    pub fn get_total_completions(&self, habit_id: Uuid) -> u32 {
+        self.completions
+            .iter()
+            .filter(|c| c.habit_id == habit_id)
+            .map(|c| c.count)
+            .sum()
+    }
+
+    /// Get total unique days completed for a habit.
+    pub fn get_total_days_done(&self, habit_id: Uuid) -> u32 {
+        self.completions
+            .iter()
+            .filter(|c| c.habit_id == habit_id)
+            .count() as u32
     }
 
     /// Get streak data for a habit.
@@ -264,11 +303,7 @@ impl AppState {
             .cloned()
             .unwrap_or_default();
         let streak = self.get_streak(habit_id);
-        let total_completions = self
-            .completions
-            .iter()
-            .filter(|c| c.habit_id == habit_id)
-            .count() as u32;
+        let total_completions = self.get_total_completions(habit_id);
 
         rewards::check_milestones(&mut tracker, streak.current_streak_days, total_completions)
     }

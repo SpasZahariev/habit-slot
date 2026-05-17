@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::models::{CoinBalance, Completion, GlobalReward, Habit, RewardPool};
 
 /// Current schema version. Increment on every migration.
-const SCHEMA_VERSION: i32 = 2;
+const SCHEMA_VERSION: i32 = 3;
 
 #[cfg(feature = "db")]
 pub struct Db {
@@ -92,6 +92,18 @@ impl Db {
             .flatten();
 
         if current.map_or(true, |v| v < SCHEMA_VERSION) {
+            if current.unwrap_or(0) < 3 {
+                conn.execute_batch(
+                    "ALTER TABLE completions ADD COLUMN count INTEGER NOT NULL DEFAULT 1;",
+                )?;
+                conn.execute_batch(
+                    "ALTER TABLE habits ADD COLUMN target_days INTEGER NOT NULL DEFAULT 0;",
+                )?;
+                conn.execute_batch(
+                    "ALTER TABLE habits ADD COLUMN longest_streak INTEGER NOT NULL DEFAULT 0;",
+                )?;
+            }
+
             conn.execute(
                 "INSERT OR REPLACE INTO metadata (key, value) VALUES ('schema_version', ?1)",
                 [&SCHEMA_VERSION],
@@ -108,11 +120,12 @@ impl Db {
         id: Uuid,
         name: &str,
         created_at: NaiveDate,
+        target_days: u32,
     ) -> Result<(), rusqlite::Error> {
         let date_str = format_date(created_at);
         self.conn.execute(
-            "INSERT OR REPLACE INTO habits (id, name, created_at) VALUES (?1, ?2, ?3)",
-            [&id.to_string(), name, &date_str],
+            "INSERT OR REPLACE INTO habits (id, name, created_at, target_days, longest_streak) VALUES (?1, ?2, ?3, ?4, 0)",
+            rusqlite::params![&id.to_string(), name, &date_str, target_days],
         )?;
 
         self.conn.execute(
@@ -135,9 +148,9 @@ impl Db {
     }
 
     pub fn load_habits(&self) -> Result<Vec<Habit>, rusqlite::Error> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT id, name, created_at FROM habits ORDER BY created_at")?;
+        let mut stmt = self.conn.prepare(
+            "SELECT id, name, created_at, target_days, longest_streak FROM habits ORDER BY created_at",
+        )?;
         let rows = stmt.query_map((), |row| {
             Ok(Habit {
                 id: Uuid::parse_str(&row.get::<_, String>(0)?).unwrap_or_default(),
@@ -145,6 +158,8 @@ impl Db {
                 created_at: NaiveDate::parse_from_str(&row.get::<_, String>(2)?, "%Y-%m-%d")
                     .unwrap_or_default(),
                 reward_pool: RewardPool::default(),
+                target_days: row.get::<_, u32>(3).unwrap_or(0),
+                longest_streak: row.get::<_, u32>(4).unwrap_or(0),
             })
         })?;
 
@@ -166,6 +181,55 @@ impl Db {
         Ok(())
     }
 
+    pub fn increment_completion(
+        &self,
+        habit_id: Uuid,
+        date: NaiveDate,
+    ) -> Result<u32, rusqlite::Error> {
+        let date_str = format_date(date);
+        let habit_id_str = habit_id.to_string();
+
+        self.conn.execute(
+            "INSERT INTO completions (habit_id, date, count) VALUES (?1, ?2, 1) \
+             ON CONFLICT(habit_id, date) DO UPDATE SET count = count + 1",
+            [&habit_id_str, &date_str],
+        )?;
+
+        let new_count: u32 = self.conn.query_row(
+            "SELECT count FROM completions WHERE habit_id = ?1 AND date = ?2",
+            [&habit_id_str, &date_str],
+            |row| row.get(0),
+        )?;
+
+        Ok(new_count)
+    }
+
+    pub fn update_longest_streak(
+        &self,
+        habit_id: Uuid,
+        streak: u32,
+    ) -> Result<(), rusqlite::Error> {
+        self.conn.execute(
+            "UPDATE habits SET longest_streak = ?1 WHERE id = ?2",
+            rusqlite::params![streak, habit_id.to_string()],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_today_count(&self, habit_id: Uuid, date: NaiveDate) -> Result<u32, rusqlite::Error> {
+        let date_str = format_date(date);
+        let count: Option<u32> = self
+            .conn
+            .query_row(
+                "SELECT count FROM completions WHERE habit_id = ?1 AND date = ?2",
+                [&habit_id.to_string(), &date_str],
+                |row| row.get(0),
+            )
+            .ok()
+            .flatten();
+        Ok(count.unwrap_or(0))
+    }
+
     pub fn delete_completion(
         &self,
         habit_id: Uuid,
@@ -182,12 +246,13 @@ impl Db {
     pub fn load_completions(&self) -> Result<Vec<Completion>, rusqlite::Error> {
         let mut stmt = self
             .conn
-            .prepare("SELECT habit_id, date FROM completions")?;
+            .prepare("SELECT habit_id, date, count FROM completions")?;
         let rows = stmt.query_map((), |row| {
             Ok(Completion {
                 habit_id: Uuid::parse_str(&row.get::<_, String>(0)?).unwrap_or_default(),
                 date: NaiveDate::parse_from_str(&row.get::<_, String>(1)?, "%Y-%m-%d")
                     .unwrap_or_default(),
+                count: row.get::<_, u32>(2).unwrap_or(1),
             })
         })?;
 
@@ -400,13 +465,15 @@ mod tests {
         let name = "Test Habit".to_string();
         let created = date(2026, 5, 7);
 
-        db.insert_habit(id, &name, created).unwrap();
+        db.insert_habit(id, &name, created, 0).unwrap();
 
         let habits = db.load_habits().unwrap();
         assert_eq!(habits.len(), 1);
         assert_eq!(habits[0].id, id);
         assert_eq!(habits[0].name, name);
         assert_eq!(habits[0].created_at, created);
+        assert_eq!(habits[0].target_days, 0);
+        assert_eq!(habits[0].longest_streak, 0);
 
         db.delete_habit(id).unwrap();
         assert!(db.load_habits().unwrap().is_empty());
@@ -416,7 +483,8 @@ mod tests {
     fn completion_crud_roundtrip() {
         let db = Db::open_memory().unwrap();
         let habit_id = Uuid::new_v4();
-        db.insert_habit(habit_id, "Test", date(2026, 5, 1)).unwrap();
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+            .unwrap();
 
         let comp_date = date(2026, 5, 7);
         db.insert_completion(habit_id, comp_date).unwrap();
@@ -425,6 +493,7 @@ mod tests {
         assert_eq!(completions.len(), 1);
         assert_eq!(completions[0].habit_id, habit_id);
         assert_eq!(completions[0].date, comp_date);
+        assert_eq!(completions[0].count, 1);
 
         db.delete_completion(habit_id, comp_date).unwrap();
         assert!(db.load_completions().unwrap().is_empty());
@@ -485,7 +554,7 @@ mod tests {
         {
             let db1 = Db::open(path).unwrap();
             let id = Uuid::new_v4();
-            db1.insert_habit(id, "Persisted Habit", date(2026, 5, 7))
+            db1.insert_habit(id, "Persisted Habit", date(2026, 5, 7), 0)
                 .unwrap();
             db1.insert_completion(id, date(2026, 5, 7)).unwrap();
 
@@ -507,6 +576,7 @@ mod tests {
 
             let completions = db2.load_completions().unwrap();
             assert_eq!(completions.len(), 1);
+            assert_eq!(completions[0].count, 1);
 
             let balance = db2.load_coin_balance().unwrap();
             assert_eq!(balance.balance, 15);
@@ -519,7 +589,8 @@ mod tests {
     fn milestone_tracker_crud() {
         let db = Db::open_memory().unwrap();
         let habit_id = Uuid::new_v4();
-        db.insert_habit(habit_id, "Test", date(2026, 5, 1)).unwrap();
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+            .unwrap();
 
         let tracker = db.load_milestone_tracker(habit_id).unwrap();
         assert!(tracker.claimed_streak_tiers.is_empty());
@@ -608,5 +679,138 @@ mod tests {
         assert_eq!(rewards[0].tier, crate::models::GlobalRewardTier::Low);
         assert_eq!(rewards[1].tier, crate::models::GlobalRewardTier::Medium);
         assert_eq!(rewards[2].tier, crate::models::GlobalRewardTier::Jackpot);
+    }
+
+    #[test]
+    fn increment_completion_first_insert() {
+        let db = Db::open_memory().unwrap();
+        let habit_id = Uuid::new_v4();
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+            .unwrap();
+
+        let comp_date = date(2026, 5, 7);
+        let count = db.increment_completion(habit_id, comp_date).unwrap();
+        assert_eq!(count, 1);
+
+        let completions = db.load_completions().unwrap();
+        assert_eq!(completions.len(), 1);
+        assert_eq!(completions[0].count, 1);
+    }
+
+    #[test]
+    fn increment_completion_subsequent_calls() {
+        let db = Db::open_memory().unwrap();
+        let habit_id = Uuid::new_v4();
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+            .unwrap();
+
+        let comp_date = date(2026, 5, 7);
+        assert_eq!(db.increment_completion(habit_id, comp_date).unwrap(), 1);
+        assert_eq!(db.increment_completion(habit_id, comp_date).unwrap(), 2);
+        assert_eq!(db.increment_completion(habit_id, comp_date).unwrap(), 3);
+
+        let completions = db.load_completions().unwrap();
+        assert_eq!(completions.len(), 1);
+        assert_eq!(completions[0].count, 3);
+    }
+
+    #[test]
+    fn increment_completion_different_dates() {
+        let db = Db::open_memory().unwrap();
+        let habit_id = Uuid::new_v4();
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+            .unwrap();
+
+        let d1 = date(2026, 5, 7);
+        let d2 = date(2026, 5, 8);
+
+        assert_eq!(db.increment_completion(habit_id, d1).unwrap(), 1);
+        assert_eq!(db.increment_completion(habit_id, d1).unwrap(), 2);
+        assert_eq!(db.increment_completion(habit_id, d2).unwrap(), 1);
+
+        let completions = db.load_completions().unwrap();
+        assert_eq!(completions.len(), 2);
+    }
+
+    #[test]
+    fn update_longest_streak_persists() {
+        let db = Db::open_memory().unwrap();
+        let habit_id = Uuid::new_v4();
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 30)
+            .unwrap();
+
+        db.update_longest_streak(habit_id, 7).unwrap();
+        let habits = db.load_habits().unwrap();
+        assert_eq!(habits[0].longest_streak, 7);
+
+        db.update_longest_streak(habit_id, 14).unwrap();
+        let habits = db.load_habits().unwrap();
+        assert_eq!(habits[0].longest_streak, 14);
+    }
+
+    #[test]
+    fn habit_target_days_persists() {
+        let db = Db::open_memory().unwrap();
+        let id = Uuid::new_v4();
+        db.insert_habit(id, "Exercise", date(2026, 5, 1), 30)
+            .unwrap();
+
+        let habits = db.load_habits().unwrap();
+        assert_eq!(habits[0].target_days, 30);
+    }
+
+    #[test]
+    fn schema_migration_v2_to_v3() {
+        let db_conn = Connection::open("").unwrap();
+
+        db_conn
+            .execute_batch("CREATE TABLE metadata (key TEXT PRIMARY KEY, value INTEGER NOT NULL);")
+            .unwrap();
+        db_conn.execute_batch(
+            "CREATE TABLE habits (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at DATE NOT NULL);",
+        ).unwrap();
+        db_conn
+            .execute_batch(
+                "CREATE TABLE completions (habit_id TEXT NOT NULL, date DATE NOT NULL, \
+             PRIMARY KEY (habit_id, date));",
+            )
+            .unwrap();
+        db_conn.execute_batch(
+            "CREATE TABLE coin_balance (id INTEGER PRIMARY KEY CHECK (id = 1), balance INTEGER NOT NULL DEFAULT 0);",
+        ).unwrap();
+        db_conn.execute_batch(
+            "CREATE TABLE transactions (id TEXT PRIMARY KEY, kind TEXT NOT NULL, \
+             amount INTEGER NOT NULL, balance_after INTEGER NOT NULL, note TEXT, created_at DATETIME);",
+        ).unwrap();
+        db_conn
+            .execute_batch(
+                "CREATE TABLE milestones (\
+             habit_id TEXT PRIMARY KEY, \
+             claimed_streak_tiers TEXT NOT NULL DEFAULT '{}', \
+             claimed_completion_tiers TEXT NOT NULL DEFAULT '{}');",
+            )
+            .unwrap();
+        db_conn.execute_batch(
+            "CREATE TABLE pity_counter (id INTEGER PRIMARY KEY CHECK (id = 1), consecutive_losses INTEGER NOT NULL DEFAULT 0);",
+        ).unwrap();
+        db_conn.execute_batch(
+            "CREATE TABLE global_rewards (id TEXT PRIMARY KEY, name TEXT NOT NULL, tier TEXT NOT NULL);",
+        ).unwrap();
+
+        let habit_id = Uuid::new_v4();
+        db_conn
+            .execute(
+                "INSERT INTO habits (id, name, created_at) VALUES (?, ?, ?)",
+                [&habit_id.to_string(), "Legacy Habit", "2026-05-01"],
+            )
+            .unwrap();
+        db_conn
+            .execute(
+                "INSERT INTO completions (habit_id, date) VALUES (?, ?)",
+                [&habit_id.to_string(), "2026-05-07"],
+            )
+            .unwrap();
+
+        Db::open_memory().ok();
     }
 }

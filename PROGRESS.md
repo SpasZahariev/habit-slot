@@ -32,4 +32,6 @@ All issues up to #35 are DONE.
 
 ---
 
-Next: Begin with Slice 1 (Issue #36)
+- [x] Issue #37: Slice 1: Completion Counting, Schema Migration v3, Flat Coin Economy — DONE
+
+Next: Begin with Slice 2 (Issue #38)

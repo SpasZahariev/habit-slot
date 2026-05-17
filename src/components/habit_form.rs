@@ -12,7 +12,7 @@ pub fn HabitForm() -> Element {
                 e.prevent_default();
                 let trimmed = name.read().trim().to_string();
                 if !trimmed.is_empty() {
-                    app_state.write().add_habit(trimmed);
+                    app_state.write().add_habit(trimmed, 0);
                     name.set(String::new());
                 }
             },

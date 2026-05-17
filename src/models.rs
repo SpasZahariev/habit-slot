@@ -31,6 +31,8 @@ pub struct Habit {
     pub name: String,
     pub created_at: NaiveDate,
     pub reward_pool: RewardPool,
+    pub target_days: u32,
+    pub longest_streak: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -71,6 +73,7 @@ pub struct StreakData {
 pub struct Completion {
     pub habit_id: Uuid,
     pub date: NaiveDate,
+    pub count: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

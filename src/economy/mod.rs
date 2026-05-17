@@ -2,26 +2,9 @@ use uuid::Uuid;
 
 use crate::models::{CoinBalance, Transaction, TransactionKind};
 
-/// Award coins for completing a habit. Base earn is 1 coin + streak bonus.
-pub fn on_complete(coins: &mut CoinBalance, streak_days: u32) {
-    let base_earn = 1u32;
-    let streak_bonus = streak_bonus(streak_days);
-    let total_earn = base_earn + streak_bonus;
-
-    earn(
-        coins,
-        total_earn,
-        format!("Habit complete (streak {}d)", streak_days),
-    );
-}
-
-/// Calculate streak bonus: every 7 consecutive days grants +1 bonus coin.
-fn streak_bonus(streak_days: u32) -> u32 {
-    if streak_days < 7 {
-        0
-    } else {
-        (streak_days / 7) as u32
-    }
+/// Award flat 1 coin for a habit tick. No streak bonus.
+pub fn on_habit_tick(coins: &mut CoinBalance) {
+    earn(coins, 1, "Habit tick".to_string());
 }
 
 /// Add coins to balance and record an immutable transaction.
@@ -112,30 +95,16 @@ mod tests {
     }
 
     #[test]
-    fn streak_bonus_formula() {
-        assert_eq!(streak_bonus(0), 0);
-        assert_eq!(streak_bonus(6), 0);
-        assert_eq!(streak_bonus(7), 1);
-        assert_eq!(streak_bonus(13), 1);
-        assert_eq!(streak_bonus(14), 2);
-        assert_eq!(streak_bonus(21), 3);
-    }
-
-    #[test]
-    fn on_complete_base_plus_bonus() {
+    fn on_habit_tick_awards_one_coin() {
         let mut coins = fresh_coins();
+        on_habit_tick(&mut coins);
+        assert_eq!(coins.balance, 1);
 
-        // No streak bonus yet
-        on_complete(&mut coins, 0);
-        assert_eq!(coins.balance, 1); // base earn only
+        on_habit_tick(&mut coins);
+        assert_eq!(coins.balance, 2);
 
-        // At 7 days streak: 1 + 1 bonus = 2
-        on_complete(&mut coins, 7);
+        on_habit_tick(&mut coins);
         assert_eq!(coins.balance, 3);
-
-        // At 14 days streak: 1 + 2 bonus = 3
-        on_complete(&mut coins, 14);
-        assert_eq!(coins.balance, 6);
     }
 
     #[test]
