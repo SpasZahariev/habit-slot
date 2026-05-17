@@ -7,15 +7,6 @@ pub fn HabitList() -> Element {
     let mut app_state = use_context::<Signal<AppState>>();
     let habits = app_state.read().habits.clone();
 
-    if habits.is_empty() {
-        return rsx! {
-            div {
-                class: "empty-state text-center px-4 py-12 opacity-70 text-[#f0e6ff]",
-                p { "No habits yet. Tap 'Add Habit' to create one." }
-            }
-        };
-    }
-
     rsx! {
         button {
             onclick: move |_| {
@@ -26,10 +17,17 @@ pub fn HabitList() -> Element {
             "Add Habit"
         }
 
-        ul {
-            class: "habit-list list-none w-[96%] gap-2 flex flex-col",
-            for habit in habits {
-                HabitItem { habit }
+        if habits.is_empty() {
+            div {
+                class: "empty-state text-center px-4 py-12 opacity-70 text-[#f0e6ff]",
+                p { "No habits yet. Tap 'Add Habit' to create one." }
+            }
+        } else {
+            ul {
+                class: "habit-list list-none w-[96%] gap-2 flex flex-col",
+                for habit in habits {
+                    HabitItem { habit }
+                }
             }
         }
     }
