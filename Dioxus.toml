@@ -1,3 +1,20 @@
 [application]
 name = "habit-slot"
 default_platform = "android"
+
+[android.app]
+icon = "static/scroll-icon.png"
+
+# Production configurations for physical deployments
+[bundle.android]
+min_sdk_version = 26       # Android 8.0 or higher (prevents install failures on older models)
+target_sdk_version = 34    # Targets recent Android API standards
+orientation = "portrait"   # Locks your game window layout from rotating sideways accidentally
+
+# Reference the path and alias statically, but hide the passwords
+jks_file = "game-release.keystore"
+key_alias = "game-key-alias"
+
+# Fetch passwords dynamically from the environment
+jks_password = "System.getenv(\"ANDROID_KEYSTORE_PASSWORD\")"
+key_password = "System.getenv(\"ANDROID_KEY_PASSWORD\")"
