@@ -204,6 +204,21 @@
 - SPIN button disabled during spin animation to prevent overlapping spins
 - 9 new tests (74 total): strip length, final symbols match result, filler distribution, all strips production, symbol matching
 
+## Issue #32: Rewards page foundation + navigation ✓ DONE
+
+- `GlobalRewardTier` enum (Low, Medium, Jackpot) and `GlobalReward` struct in `src/models.rs`
+- `Page::Rewards` variant added to page enum in state.rs
+- `global_rewards: Vec<GlobalReward>` field on AppState with default empty vec
+- `RewardsPage` component (`src/components/rewards_page.rs`): renders tiered reward list or "No rewards yet" empty-state message
+- NavBar shows "Rewards" title on the page, back arrow navigates home
+- "Rewards" button on HomePage between Slot Machine and Habits buttons (cyan border)
+- `global_rewards` SQLite table: `id TEXT PRIMARY KEY`, `name TEXT NOT NULL`, `tier TEXT NOT NULL`
+- Schema version incremented from 1 → 2
+- DB CRUD: `insert_global_reward()`, `delete_global_reward()`, `load_global_rewards()` with tier serialization/deserialization
+- `AppState.from_db()` loads global rewards from DB
+- Routing renders RewardsPage for `Page::Rewards` in main.rs
+- 2 new tests (73 total): CRUD roundtrip, tier serialization correctness
+
 ## Issue #30: Lever slider replaces SPIN button ✓ DONE
 
 - `LeverSlider` component (`src/components/lever_slider.rs`): pill-shaped drag lever with state machine Idle → Dragging → Triggered → Resetting → Idle
