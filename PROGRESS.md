@@ -38,3 +38,4 @@ Next: Begin with Slice 2 (Issue #38)
 
 - [x] Issue #38: Slice 2: Habit Modal, Add Button, Redesigned Card Layout — DONE
 - [x] Issue #39: Slice 3: Tick Button, Coin Award, Toast, Streak Tracking — DONE
+- [x] Issue #40: Slice 4: Habit Detail Page, Binary Calendar Heatmap, Delete with Confirmation — DONE
