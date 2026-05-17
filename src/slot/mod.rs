@@ -17,6 +17,21 @@ fn payout_multiplier(symbol: SlotSymbol) -> u32 {
     symbol.config().payout_multiplier
 }
 
+/// Calculate final payout for a matched row given bet amount.
+/// ExtraRoll is special: pays back the bet + 1 coin regardless of multiplier.
+fn calc_payout(best_match: [SlotSymbol; 3], bet: u32) -> u32 {
+    let tier = symbol_tier(best_match[0]);
+    if tier == RewardTier::ExtraRoll {
+        return bet + 1;
+    }
+    let avg_mult = best_match
+        .iter()
+        .map(|s| payout_multiplier(*s))
+        .sum::<u32>()
+        / 3;
+    avg_mult * bet
+}
+
 /// Map a matched symbol to its reward tier from config.
 fn symbol_tier(symbol: SlotSymbol) -> RewardTier {
     symbol.config().tier
@@ -28,6 +43,7 @@ fn symbol_tier_order(symbol: SlotSymbol) -> u8 {
         RewardTier::Small => 0,
         RewardTier::Medium => 1,
         RewardTier::Jackpot => 2,
+        RewardTier::ExtraRoll => 4,
         RewardTier::None => 3,
     }
 }
@@ -43,6 +59,7 @@ fn symbols_for_tier(tier: RewardTier) -> &'static [SlotSymbol] {
         RewardTier::Small => &[SlotSymbol::Low0, SlotSymbol::Low1, SlotSymbol::Low2],
         RewardTier::Medium => &[SlotSymbol::Mid0, SlotSymbol::Mid1],
         RewardTier::Jackpot => &[SlotSymbol::High0],
+        RewardTier::ExtraRoll => &[SlotSymbol::ExtraRoll0],
         RewardTier::None => &[],
     }
 }
@@ -60,6 +77,7 @@ fn roll_symbol(rng: &mut impl Rng) -> SlotSymbol {
         SlotSymbol::Mid0,
         SlotSymbol::Mid1,
         SlotSymbol::High0,
+        SlotSymbol::ExtraRoll0,
     ];
 
     let mut cumulative = 0.0;
@@ -185,10 +203,7 @@ pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
     };
 
     let payout_coins = match &best_match {
-        Some(row) => {
-            let avg_mult = row.iter().map(|s| payout_multiplier(*s)).sum::<u32>() / 3;
-            avg_mult * bet
-        }
+        Some(row) => calc_payout(*row, bet),
         None => 0,
     };
 
@@ -230,10 +245,7 @@ pub fn resolve_reels(reels: [[SlotSymbol; 3]; 3], bet: u32) -> SpinResult {
     };
 
     let payout_coins = match &best_match {
-        Some(row) => {
-            let avg_mult = row.iter().map(|s| payout_multiplier(*s)).sum::<u32>() / 3;
-            avg_mult * bet
-        }
+        Some(row) => calc_payout(*row, bet),
         None => 0,
     };
 
@@ -348,6 +360,7 @@ mod tests {
         assert_eq!(symbol_tier(SlotSymbol::Mid0), RewardTier::Medium);
         assert_eq!(symbol_tier(SlotSymbol::Mid1), RewardTier::Medium);
         assert_eq!(symbol_tier(SlotSymbol::High0), RewardTier::Jackpot);
+        assert_eq!(symbol_tier(SlotSymbol::ExtraRoll0), RewardTier::ExtraRoll);
     }
 
     #[test]
@@ -406,6 +419,7 @@ mod tests {
         let mut small_count = 0u32;
         let mut medium_count = 0u32;
         let mut jackpot_count = 0u32;
+        let mut extra_roll_count = 0u32;
         let mut no_win_count = 0u32;
 
         for _ in 0..NUM_SPINS {
@@ -448,12 +462,13 @@ mod tests {
                     RewardTier::Small => small_count += 1,
                     RewardTier::Medium => medium_count += 1,
                     RewardTier::Jackpot => jackpot_count += 1,
+                    RewardTier::ExtraRoll => extra_roll_count += 1,
                     RewardTier::None => unreachable!(),
                 },
             }
         }
 
-        let total = small_count + medium_count + jackpot_count + no_win_count;
+        let total = small_count + medium_count + jackpot_count + extra_roll_count + no_win_count;
         assert_eq!(total, NUM_SPINS);
 
         let no_win_rate = no_win_count as f64 / NUM_SPINS as f64;
@@ -668,6 +683,46 @@ mod tests {
     }
 
     #[test]
+    fn extra_roll_pays_bet_plus_one_at_bet_1() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::ExtraRoll0, SlotSymbol::Low0, SlotSymbol::Mid0],
+            [SlotSymbol::ExtraRoll0, SlotSymbol::Low1, SlotSymbol::Mid1],
+            [SlotSymbol::ExtraRoll0, SlotSymbol::High0, SlotSymbol::Low0],
+        ];
+
+        let result = resolve_reels(reels, 1);
+        assert_eq!(result.tier, RewardTier::ExtraRoll);
+        assert_eq!(result.payout_coins, 2);
+        assert!(!result.grayed_high_tier);
+    }
+
+    #[test]
+    fn extra_roll_pays_bet_plus_one_at_bet_2() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Low0, SlotSymbol::ExtraRoll0, SlotSymbol::Mid0],
+            [SlotSymbol::Low1, SlotSymbol::ExtraRoll0, SlotSymbol::Mid1],
+            [SlotSymbol::High0, SlotSymbol::ExtraRoll0, SlotSymbol::Low0],
+        ];
+
+        let result = resolve_reels(reels, 2);
+        assert_eq!(result.tier, RewardTier::ExtraRoll);
+        assert_eq!(result.payout_coins, 3);
+    }
+
+    #[test]
+    fn extra_roll_pays_bet_plus_one_at_bet_3() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Low0, SlotSymbol::Mid0, SlotSymbol::ExtraRoll0],
+            [SlotSymbol::Low1, SlotSymbol::Mid1, SlotSymbol::ExtraRoll0],
+            [SlotSymbol::High0, SlotSymbol::Low0, SlotSymbol::ExtraRoll0],
+        ];
+
+        let result = resolve_reels(reels, 3);
+        assert_eq!(result.tier, RewardTier::ExtraRoll);
+        assert_eq!(result.payout_coins, 4);
+    }
+
+    #[test]
     fn animation_strip_length_is_filler_plus_3() {
         let mut rng = StdRng::seed_from_u64(42);
         let result_column = [SlotSymbol::Low0, SlotSymbol::Low1, SlotSymbol::Low2];
@@ -749,6 +804,9 @@ mod tests {
 
         let jackpot = symbols_for_tier(RewardTier::Jackpot);
         assert_eq!(jackpot.len(), 1);
+
+        let extra_roll = symbols_for_tier(RewardTier::ExtraRoll);
+        assert_eq!(extra_roll.len(), 1);
     }
 
     #[test]
@@ -768,6 +826,11 @@ mod tests {
         for _ in 0..100 {
             let sym = pick_symbol_for_tier(&mut rng, RewardTier::Jackpot);
             assert_eq!(symbol_tier(sym), RewardTier::Jackpot);
+        }
+
+        for _ in 0..100 {
+            let sym = pick_symbol_for_tier(&mut rng, RewardTier::ExtraRoll);
+            assert_eq!(symbol_tier(sym), RewardTier::ExtraRoll);
         }
     }
 }

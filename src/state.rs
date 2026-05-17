@@ -232,7 +232,8 @@ impl AppState {
                         habit_slot::models::RewardTier::Small => 5,
                         habit_slot::models::RewardTier::Medium => 10,
                         habit_slot::models::RewardTier::Jackpot => 25,
-                        habit_slot::models::RewardTier::None => 0,
+                        habit_slot::models::RewardTier::ExtraRoll
+                        | habit_slot::models::RewardTier::None => 0,
                     };
                     if bonus > 0 {
                         economy::earn(

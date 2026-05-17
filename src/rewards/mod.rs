@@ -125,7 +125,7 @@ pub fn select_reward(pool: &RewardPool, tier: RewardTier) -> Option<String> {
         RewardTier::Small => &pool.small_rewards,
         RewardTier::Medium => &pool.medium_rewards,
         RewardTier::Jackpot => &pool.jackpot_rewards,
-        RewardTier::None => return None,
+        RewardTier::ExtraRoll | RewardTier::None => return None,
     };
 
     if rewards.is_empty() {

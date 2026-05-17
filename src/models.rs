@@ -13,6 +13,7 @@ pub enum SlotSymbol {
     Mid0,
     Mid1,
     High0,
+    ExtraRoll0,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -21,6 +22,7 @@ pub enum RewardTier {
     Small,
     Medium,
     Jackpot,
+    ExtraRoll,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

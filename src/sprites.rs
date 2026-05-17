@@ -13,9 +13,14 @@ const HIGH_CHEST_URI: &str = concat!(
     include_str!("high_chest_base64.txt")
 );
 
+const EXTRA_ROLL_COINS_URI: &str = concat!(
+    "data:image/png;base64,",
+    include_str!("extra_roll_coins_base64.txt")
+);
+
 /// Single source of truth for all slot symbol properties.
 /// To add a new symbol: add an entry to this array and update the SlotSymbol enum.
-pub static SYMBOLS: [SpriteConfig; 6] = [
+pub static SYMBOLS: [SpriteConfig; 7] = [
     SpriteConfig {
         display_name: "Heart",
         tier: RewardTier::Small,
@@ -64,6 +69,14 @@ pub static SYMBOLS: [SpriteConfig; 6] = [
         sprite_uri: HIGH_CHEST_URI,
         gray_at_low_bet: true,
     },
+    SpriteConfig {
+        display_name: "ExtraRoll",
+        tier: RewardTier::ExtraRoll,
+        weight: 8.0,
+        payout_multiplier: 0,
+        sprite_uri: EXTRA_ROLL_COINS_URI,
+        gray_at_low_bet: false,
+    },
 ];
 
 /// Per-symbol configuration. Each array index maps to a SlotSymbol variant in order.
@@ -87,6 +100,7 @@ impl SlotSymbol {
             SlotSymbol::Mid0 => 3,
             SlotSymbol::Mid1 => 4,
             SlotSymbol::High0 => 5,
+            SlotSymbol::ExtraRoll0 => 6,
         }
     }
 
@@ -125,6 +139,7 @@ mod tests {
             SlotSymbol::Mid0,
             SlotSymbol::Mid1,
             SlotSymbol::High0,
+            SlotSymbol::ExtraRoll0,
         ];
 
         for symbol in &symbols {
@@ -146,6 +161,7 @@ mod tests {
         assert_eq!(symbol_display_name(&SlotSymbol::Mid0), "Skull");
         assert_eq!(symbol_display_name(&SlotSymbol::Mid1), "Skull");
         assert_eq!(symbol_display_name(&SlotSymbol::High0), "Chest");
+        assert_eq!(symbol_display_name(&SlotSymbol::ExtraRoll0), "ExtraRoll");
     }
 
     #[test]
