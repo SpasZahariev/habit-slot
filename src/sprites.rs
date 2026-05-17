@@ -4,7 +4,7 @@ const LOW_HEART_URI: &str = concat!(
     "data:image/png;base64,",
     include_str!("low_heart_base64.txt")
 );
-const MED_CRYSTAL_URI: &str = concat!(
+const MED_SKULL_URI: &str = concat!(
     "data:image/png;base64,",
     include_str!("med_crystal_base64.txt")
 );
@@ -41,19 +41,19 @@ pub static SYMBOLS: [SpriteConfig; 6] = [
         gray_at_low_bet: false,
     },
     SpriteConfig {
-        display_name: "Crystal",
+        display_name: "Skull",
         tier: RewardTier::Medium,
         weight: 18.0,
         payout_multiplier: 8,
-        sprite_uri: MED_CRYSTAL_URI,
+        sprite_uri: MED_SKULL_URI,
         gray_at_low_bet: true,
     },
     SpriteConfig {
-        display_name: "Crystal",
+        display_name: "Skull",
         tier: RewardTier::Medium,
         weight: 12.0,
         payout_multiplier: 12,
-        sprite_uri: MED_CRYSTAL_URI,
+        sprite_uri: MED_SKULL_URI,
         gray_at_low_bet: true,
     },
     SpriteConfig {
@@ -143,8 +143,8 @@ mod tests {
         assert_eq!(symbol_display_name(&SlotSymbol::Low0), "Heart");
         assert_eq!(symbol_display_name(&SlotSymbol::Low1), "Heart");
         assert_eq!(symbol_display_name(&SlotSymbol::Low2), "Heart");
-        assert_eq!(symbol_display_name(&SlotSymbol::Mid0), "Crystal");
-        assert_eq!(symbol_display_name(&SlotSymbol::Mid1), "Crystal");
+        assert_eq!(symbol_display_name(&SlotSymbol::Mid0), "Skull");
+        assert_eq!(symbol_display_name(&SlotSymbol::Mid1), "Skull");
         assert_eq!(symbol_display_name(&SlotSymbol::High0), "Chest");
     }
 

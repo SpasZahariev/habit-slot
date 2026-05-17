@@ -4,18 +4,18 @@ use dioxus::prelude::*;
 use habit_slot::models::{SlotSymbol, SpinResult};
 use habit_slot::sprites::symbol_sprite_uri;
 
-/// Cell dimensions for 32x32 PNG icons with padding. Square cells.
-const CELL_W: u32 = 56;
-const CELL_H: u32 = 56;
+/// Cell dimensions for 49x49 PNG icons with padding. Square cells.
+const CELL_W: u32 = 86;
+const CELL_H: u32 = 86;
 
 /// Gap between cells in a reel strip.
-const CELL_GAP: u32 = 4;
+const CELL_GAP: u32 = 5;
 
 /// Total height of one cell + gap for animation calculation.
-const CELL_STEP: u32 = CELL_H + CELL_GAP; // 60
+const CELL_STEP: u32 = CELL_H + CELL_GAP; // 78
 
 /// Top/bottom padding inside the reel strip container.
-const STRIP_PADDING: u32 = 8;
+const STRIP_PADDING: u32 = 10;
 
 /// Viewport height: 3 visible cells + 2 gaps + padding.
 const VIEWPORT_HEIGHT: u32 = CELL_H * 3 + CELL_GAP * 2 + STRIP_PADDING * 2; // 200
@@ -133,6 +133,32 @@ pub fn SlotMachine() -> Element {
             .reel-strip-static {{
                 transform: translateY({anim_dist}px);
             }}
+
+            .slot-cell {{
+                flex-shrink: 0;
+                width: {CELL_W}px;
+                height: {CELL_H}px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: #2a1a4e;
+                border-radius: 6px;
+            }}
+
+            .slot-cell-img {{
+                width: {(CELL_W as f32 * 0.57).round() as u32}px;
+                height: {(CELL_W as f32 * 0.57).round() as u32}px;
+                object-fit: contain;
+            }}
+
+            .slot-cell--winning {{
+                box-shadow: 0 0 0 2px #00f5d4;
+            }}
+
+            .slot-cell--grayed {{
+                filter: grayscale(1) brightness(0.5);
+                opacity: 0.5;
+            }}
         " }
 
         div {
@@ -245,11 +271,11 @@ fn ReelColumnAnimated(
 #[component]
 fn ReelSymbolCell(symbol: SlotSymbol, is_winning: bool, is_grayed: bool) -> Element {
     let cell_class = if is_grayed && is_winning {
-        format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50")
+        "slot-cell slot-cell--grayed"
     } else if is_winning {
-        format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]")
+        "slot-cell slot-cell--winning"
     } else {
-        format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md")
+        "slot-cell"
     };
 
     rsx! {
@@ -257,7 +283,7 @@ fn ReelSymbolCell(symbol: SlotSymbol, is_winning: bool, is_grayed: bool) -> Elem
             class: cell_class,
             img {
                 src: symbol_sprite_uri(&symbol),
-                class: "w-8 h-8 object-contain",
+                class: "slot-cell-img",
             }
         }
     }
@@ -288,7 +314,7 @@ fn Reels(spin_result: Option<SpinResult>) -> Element {
 
 struct ReelCellData {
     uri: &'static str,
-    cell_class: String,
+    cell_class: &'static str,
 }
 
 #[component]
@@ -316,11 +342,11 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         .map(|row| {
             let is_winning_cell = winning_row == Some(row);
             let cell_class = if is_grayed && is_winning_cell {
-                format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50")
+                "slot-cell slot-cell--grayed"
             } else if is_winning_cell {
-                format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]")
+                "slot-cell slot-cell--winning"
             } else {
-                format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md")
+                "slot-cell"
             };
             ReelCellData {
                 uri: symbol_sprite_uri(&reels[col][row]),
@@ -339,7 +365,7 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
                         class: cell.cell_class,
                         img {
                             src: cell.uri,
-                            class: "w-8 h-8 object-contain",
+                            class: "slot-cell-img",
                         }
                     }
                 }

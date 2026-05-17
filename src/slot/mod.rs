@@ -72,18 +72,21 @@ fn roll_symbol(rng: &mut impl Rng) -> SlotSymbol {
     SlotSymbol::default()
 }
 
-/// Check a single row (payline) for 3-of-a-kind.
+/// Check a single row (payline) for 3-of-a-kind by display name.
 fn check_payline(row: [SlotSymbol; 3]) -> Option<(SlotSymbol, u8)> {
-    if row[0] == row[1] && row[1] == row[2] {
+    if sprites::symbol_display_name(&row[0]) == sprites::symbol_display_name(&row[1])
+        && sprites::symbol_display_name(&row[1]) == sprites::symbol_display_name(&row[2])
+    {
         Some((row[0], 3))
     } else {
         None
     }
 }
 
-/// Check if a payline has a near-miss pattern: two symbols match, third is different.
+/// Check if a payline has a near-miss pattern: two symbols share display name, third doesn't.
 fn check_near_miss(row: [SlotSymbol; 3]) -> bool {
-    row[0] == row[1] || row[1] == row[2] || row[0] == row[2]
+    let n = |s: &SlotSymbol| sprites::symbol_display_name(s);
+    n(&row[0]) == n(&row[1]) || n(&row[1]) == n(&row[2]) || n(&row[0]) == n(&row[2])
 }
 
 /// Check if any payline has a near-miss pattern across the reels.
@@ -174,36 +177,24 @@ pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
     };
 
     // Check horizontal paylines (top, middle, bottom rows across all reels).
-    let mut best_match: Option<(SlotSymbol, u8)> = None;
-    for row_idx in 0..3 {
-        let payline = [reels[0][row_idx], reels[1][row_idx], reels[2][row_idx]];
-        if let Some((symbol, count)) = check_payline(payline) {
-            match &best_match {
-                None => best_match = Some((symbol, count)),
-                Some((best_symbol, _)) => {
-                    let current_tier_idx = symbol_tier_order(symbol);
-                    let best_tier_idx = symbol_tier_order(*best_symbol);
-                    if current_tier_idx > best_tier_idx {
-                        best_match = Some((symbol, count));
-                    }
-                }
-            }
-        }
-    }
+    let best_match = find_best_match(&reels);
 
     let tier = match &best_match {
-        Some((symbol, _)) => symbol_tier(*symbol),
+        Some(row) => symbol_tier(row[0]),
         None => RewardTier::None,
     };
 
     let payout_coins = match &best_match {
-        Some((symbol, _)) => payout_multiplier(*symbol) * bet,
+        Some(row) => {
+            let avg_mult = row.iter().map(|s| payout_multiplier(*s)).sum::<u32>() / 3;
+            avg_mult * bet
+        }
         None => 0,
     };
 
     // Determine if symbol should be grayed out at low bet.
     let grayed_high_tier = best_match
-        .map(|(s, _)| symbol_gray_at_low_bet(s) && bet < MAX_BET)
+        .map(|row| symbol_gray_at_low_bet(row[0]) && bet < MAX_BET)
         .unwrap_or(false);
 
     // Apply reduced payout for grayed symbols: proportional to bet/MAX_BET ratio.
@@ -221,7 +212,7 @@ pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
 
     SpinResult {
         reels,
-        symbols_matched: best_match,
+        symbols_matched: best_match.map(|row| (row[0], 3)),
         tier,
         payout_coins: effective_payout,
         is_near_miss,
@@ -231,36 +222,23 @@ pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
 
 /// Resolve a spin from pre-generated reels (no RNG). Used for testing grayed-out behavior.
 pub fn resolve_reels(reels: [[SlotSymbol; 3]; 3], bet: u32) -> SpinResult {
-    // Check horizontal paylines
-    let mut best_match: Option<(SlotSymbol, u8)> = None;
-    for row_idx in 0..3 {
-        let payline = [reels[0][row_idx], reels[1][row_idx], reels[2][row_idx]];
-        if let Some((symbol, count)) = check_payline(payline) {
-            match &best_match {
-                None => best_match = Some((symbol, count)),
-                Some((best_symbol, _)) => {
-                    let current_tier_idx = symbol_tier_order(symbol);
-                    let best_tier_idx = symbol_tier_order(*best_symbol);
-                    if current_tier_idx > best_tier_idx {
-                        best_match = Some((symbol, count));
-                    }
-                }
-            }
-        }
-    }
+    let best_match = find_best_match(&reels);
 
     let tier = match &best_match {
-        Some((symbol, _)) => symbol_tier(*symbol),
+        Some(row) => symbol_tier(row[0]),
         None => RewardTier::None,
     };
 
     let payout_coins = match &best_match {
-        Some((symbol, _)) => payout_multiplier(*symbol) * bet,
+        Some(row) => {
+            let avg_mult = row.iter().map(|s| payout_multiplier(*s)).sum::<u32>() / 3;
+            avg_mult * bet
+        }
         None => 0,
     };
 
     let grayed_high_tier = best_match
-        .map(|(s, _)| symbol_gray_at_low_bet(s) && bet < MAX_BET)
+        .map(|row| symbol_gray_at_low_bet(row[0]) && bet < MAX_BET)
         .unwrap_or(false);
 
     let effective_payout = if grayed_high_tier {
@@ -273,12 +251,33 @@ pub fn resolve_reels(reels: [[SlotSymbol; 3]; 3], bet: u32) -> SpinResult {
 
     SpinResult {
         reels,
-        symbols_matched: best_match,
+        symbols_matched: best_match.map(|row| (row[0], 3)),
         tier,
         payout_coins: effective_payout,
         is_near_miss,
         grayed_high_tier,
     }
+}
+
+/// Find the highest-tier matching payline across all three rows.
+fn find_best_match(reels: &[[SlotSymbol; 3]; 3]) -> Option<[SlotSymbol; 3]> {
+    let mut best: Option<[SlotSymbol; 3]> = None;
+    for row_idx in 0..3 {
+        let payline = [reels[0][row_idx], reels[1][row_idx], reels[2][row_idx]];
+        if check_payline(payline).is_some() {
+            match &best {
+                None => best = Some(payline),
+                Some(b) => {
+                    let current_tier = symbol_tier_order(payline[0]);
+                    let best_tier = symbol_tier_order(b[0]);
+                    if current_tier > best_tier {
+                        best = Some(payline);
+                    }
+                }
+            }
+        }
+    }
+    best
 }
 
 /// Expected probability of rolling exactly 3 of a given symbol on any single payline.
@@ -510,13 +509,13 @@ mod tests {
 
     #[test]
     fn near_miss_detected_on_two_matching_symbols() {
-        let row_kebab_taco = [SlotSymbol::Low0, SlotSymbol::Low0, SlotSymbol::Low1];
-        assert!(check_near_miss(row_kebab_taco));
+        let row_two_hearts = [SlotSymbol::Low0, SlotSymbol::Low1, SlotSymbol::Mid0];
+        assert!(check_near_miss(row_two_hearts));
 
         let row_all_same = [SlotSymbol::Low1, SlotSymbol::Low1, SlotSymbol::Low1];
         assert!(check_near_miss(row_all_same));
 
-        let row_all_diff = [SlotSymbol::Low0, SlotSymbol::Low1, SlotSymbol::Mid0];
+        let row_all_diff = [SlotSymbol::Low0, SlotSymbol::Mid0, SlotSymbol::High0];
         assert!(!check_near_miss(row_all_diff));
     }
 
@@ -536,18 +535,18 @@ mod tests {
     fn near_miss_not_detected_on_all_different() {
         let mut reels: [[SlotSymbol; 3]; 3] = Default::default();
 
-        // All rows have different symbols
+        // All rows have different display names (Heart, Skull, Chest)
         reels[0][0] = SlotSymbol::Low0;
-        reels[1][0] = SlotSymbol::Low1;
-        reels[2][0] = SlotSymbol::Mid0;
+        reels[1][0] = SlotSymbol::Mid0;
+        reels[2][0] = SlotSymbol::High0;
 
-        reels[0][1] = SlotSymbol::Mid1;
+        reels[0][1] = SlotSymbol::Mid0;
         reels[1][1] = SlotSymbol::High0;
         reels[2][1] = SlotSymbol::Low0;
 
-        reels[0][2] = SlotSymbol::Low1;
-        reels[1][2] = SlotSymbol::Mid0;
-        reels[2][2] = SlotSymbol::Mid1;
+        reels[0][2] = SlotSymbol::High0;
+        reels[1][2] = SlotSymbol::Low0;
+        reels[2][2] = SlotSymbol::Mid0;
 
         assert!(!has_near_miss_pattern(&reels));
     }
