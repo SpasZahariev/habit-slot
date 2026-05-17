@@ -104,6 +104,61 @@ pub fn SlotMachine() -> Element {
 
             .reel-strip-anim-0 {{
                 will-change: transform, filter;
+                animation: reel-spin-0 2.5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+            }}
+
+            .reel-strip-anim-1 {{
+                will-change: transform, filter;
+                animation: reel-spin-1 3.7s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+            }}
+
+            .reel-strip-anim-2 {{
+                will-change: transform, filter;
+                animation: reel-spin-2 4.9s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+            }}
+
+            .reel-strip-static {{
+                transform: translateY({anim_dist}px);
+            }}
+                80% {{
+                    filter: blur(1px);
+                }}
+                100% {{
+                    transform: translateY({anim_dist}px);
+                    filter: blur(0px);
+                }}
+            }}
+
+            @keyframes reel-spin-1 {{
+                0% {{
+                    transform: translateY(0);
+                    filter: blur(1.5px);
+                }}
+                80% {{
+                    filter: blur(1px);
+                }}
+                100% {{
+                    transform: translateY({anim_dist}px);
+                    filter: blur(0px);
+                }}
+            }}
+
+            @keyframes reel-spin-2 {{
+                0% {{
+                    transform: translateY(0);
+                    filter: blur(1.5px);
+                }}
+                80% {{
+                    filter: blur(1px);
+                }}
+                100% {{
+                    transform: translateY({anim_dist}px);
+                    filter: blur(0px);
+                }}
+            }}
+
+            .reel-strip-anim-0 {{
+                will-change: transform, filter;
                 transform: translateY(0);
                 animation: reel-spin-0 2.5s cubic-bezier(0.2, 0.8, 0.3, 1) 0.1s forwards;
             }}
@@ -202,8 +257,11 @@ fn ReelColumnAnimated(
         None
     });
 
-    let result_offset = strip.len().saturating_sub(3);
-    let winning_global_row = winning_row.map(|r| result_offset + r);
+    let result_symbols = strip.iter().skip(strip.len().saturating_sub(3)).cloned().collect::<Vec<_>>();
+
+    let anim_strip: Vec<SlotSymbol> = [result_symbols.clone(), strip].concat();
+
+    let winning_global_row = winning_row.map(|r| r);
 
     let anim_class = if is_stopped {
         "reel-strip-static"
@@ -230,7 +288,7 @@ fn ReelColumnAnimated(
             div {
                 class: anim_class,
                 style: strip_layout,
-                for (idx, symbol) in strip.iter().enumerate() {
+                for (idx, symbol) in anim_strip.iter().enumerate() {
                     ReelSymbolCell {
                         symbol: *symbol,
                         is_winning: winning_global_row == Some(idx),
