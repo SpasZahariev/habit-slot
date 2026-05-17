@@ -15,6 +15,7 @@ use habit_slot::slot;
 use habit_slot::streaks;
 
 /// Page navigation enum for simple signal-based routing.
+#[allow(dead_code)]
 #[derive(Clone, Copy, Default, PartialEq, Eq)]
 pub enum Page {
     #[default]
@@ -44,6 +45,8 @@ pub struct AppState {
     pub global_rewards: Vec<GlobalReward>,
     /// Is the add-reward modal open?
     pub global_rewards_modal_open: bool,
+    /// Is the add-habit modal open?
+    pub habit_modal_open: bool,
     /// Reels are currently animating.
     pub is_spinning: bool,
     /// Animation strips for each reel column during spin. Each strip contains filler + result symbols.
@@ -70,6 +73,7 @@ impl Default for AppState {
             reels_stopped: 0,
             global_rewards: vec![],
             global_rewards_modal_open: false,
+            habit_modal_open: false,
             #[cfg(feature = "db")]
             db: None,
         }
@@ -108,6 +112,7 @@ impl AppState {
             reels_stopped: 0,
             global_rewards: db.load_global_rewards().ok().unwrap_or_default(),
             global_rewards_modal_open: false,
+            habit_modal_open: false,
             db: None,
         })
     }
@@ -144,6 +149,7 @@ impl AppState {
     }
 }
 
+#[allow(dead_code)]
 impl AppState {
     pub fn add_habit(&mut self, name: String, target_days: u32) {
         let habit = Habit {
@@ -155,7 +161,7 @@ impl AppState {
             longest_streak: 0,
         };
         let id = habit.id;
-        let created_at = habit.created_at;
+        let _created_at = habit.created_at;
         self.milestone_trackers
             .insert(id, MilestoneTracker::default());
         self.habits.push(habit);
@@ -191,7 +197,7 @@ impl AppState {
             .iter()
             .position(|c| c.habit_id == habit_id && c.date == today);
 
-        let new_count = if let Some(idx) = existing_idx {
+        let _new_count = if let Some(idx) = existing_idx {
             self.completions[idx].count += 1;
             self.completions[idx].count
         } else {
@@ -218,7 +224,7 @@ impl AppState {
         };
 
         // Award flat 1 coin per tick
-        let tx_count_before = self.coin_balance.transactions.len();
+        let _tx_count_before = self.coin_balance.transactions.len();
         economy::on_habit_tick(&mut self.coin_balance);
         #[cfg(feature = "db")]
         self.persist_new_transactions(tx_count_before);
@@ -365,7 +371,7 @@ impl AppState {
     /// Deducts bet, resolves spin, credits winnings. Returns the SpinResult.
     /// Prepares animation strips for reel animation.
     pub fn execute_spin(&mut self, bet: u32) -> Option<SpinResult> {
-        let tx_before = self.coin_balance.transactions.len();
+        let _tx_before = self.coin_balance.transactions.len();
         if !economy::spend(&mut self.coin_balance, bet, format!("Bet {} coins", bet)) {
             return None;
         }
@@ -441,7 +447,7 @@ impl AppState {
             name,
             tier,
         };
-        let id = reward.id;
+        let _id = reward.id;
 
         #[cfg(feature = "db")]
         if let Some(db) = &self.db {

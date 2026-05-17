@@ -2,7 +2,7 @@ mod components;
 mod state;
 
 use crate::components::{
-    CoinFooterBar, HabitList, HomePage, NavBar, RewardsPage, SlotMachine, ToastContainer,
+    CoinFooterBar, HabitList, HabitModal, HomePage, NavBar, RewardsPage, SlotMachine, ToastContainer,
 };
 use crate::state::{use_app_state, Page};
 use dioxus::prelude::*;
@@ -34,6 +34,7 @@ fn main() {
     launch(App);
 }
 
+#[allow(non_snake_case)]
 fn App() -> Element {
     let app_state = use_app_state();
 
@@ -62,7 +63,10 @@ fn App() -> Element {
                 match current_page {
                     Page::Home => rsx! { HomePage {} },
                     Page::SlotMachine => rsx! { SlotMachine {} },
-                    Page::Habits => rsx! { HabitList {} },
+                    Page::Habits => rsx! {
+                        HabitList {}
+                        HabitModal {}
+                    },
                     Page::CreateHabit => rsx! { NavBar {} },
                     Page::Rewards => rsx! { RewardsPage {} },
                 }

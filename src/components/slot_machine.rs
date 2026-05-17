@@ -55,7 +55,7 @@ pub fn SlotMachine() -> Element {
         });
     }
 
-    /// Negative translateY value for the end position of the animation.
+    // Negative translateY value for the end position of the animation.
     let anim_dist = -animation_translate_distance();
 
     rsx! {
@@ -225,7 +225,7 @@ fn ReelColumnAnimated(
     );
 
     let result_start = strip_len.saturating_sub(3);
-    let cell_colors: Vec<Option<&'static str>> = anim_strip.iter().enumerate().map(|(idx, symbol)| {
+    let cell_colors: Vec<Option<&'static str>> = anim_strip.iter().enumerate().map(|(idx, _symbol)| {
         if idx >= result_start {
             let row = idx - result_start;
             all_winning_rows.iter()

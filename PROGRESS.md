@@ -35,3 +35,5 @@ All issues up to #35 are DONE.
 - [x] Issue #37: Slice 1: Completion Counting, Schema Migration v3, Flat Coin Economy — DONE
 
 Next: Begin with Slice 2 (Issue #38)
+
+- [x] Issue #38: Slice 2: Habit Modal, Add Button, Redesigned Card Layout — DONE
