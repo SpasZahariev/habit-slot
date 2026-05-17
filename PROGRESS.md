@@ -46,3 +46,4 @@ Next: Begin with Slice 2 (Issue #38)
 - [x] Issue #42: Slice: SpinResult types + GlobalReward selection support — DONE
 - [x] Issue #43: Slice: Core slot engine - probability recalibration + reward resolution — DONE
 - [x] Issue #44: Slice: State integration - execute_spin reward resolution + lever gate — DONE
+- [x] Issue #45: Slice: UI - result display, lever disable, reward messaging — DONE
