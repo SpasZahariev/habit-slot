@@ -7,6 +7,7 @@ mod home_page;
 mod lever_slider;
 mod nav_bar;
 mod slot_machine;
+mod rewards_page;
 mod toast_container;
 
 pub use agis_animation::AgisAnimation;
@@ -17,5 +18,6 @@ pub use habit_list::HabitList;
 pub use home_page::HomePage;
 pub use lever_slider::LeverSlider;
 pub use nav_bar::NavBar;
+pub use rewards_page::RewardsPage;
 pub use slot_machine::SlotMachine;
 pub use toast_container::ToastContainer;

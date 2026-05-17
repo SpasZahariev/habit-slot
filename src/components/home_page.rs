@@ -26,6 +26,14 @@ pub fn HomePage() -> Element {
             }
 
             button {
+                class: "nav-button w-full max-w-xs py-btn-padding text-btn-lg font-bold bg-[#2a1a4e] text-[#00f5d4] rounded-xl mb-4 border-2 border-[#00f5d4] cursor-pointer",
+                onclick: move |_| {
+                    app_state.with_mut(|state| state.navigate(crate::state::Page::Rewards));
+                },
+                "Rewards"
+            }
+
+            button {
                 class: "nav-button w-full max-w-xs py-btn-padding text-btn-lg font-bold bg-[#2a1a4e] text-[#00f5d4] rounded-xl border-2 border-[#ff2d78] cursor-pointer",
                 onclick: move |_| {
                     app_state.with_mut(|state| state.navigate(crate::state::Page::Habits));

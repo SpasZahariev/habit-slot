@@ -1,7 +1,9 @@
 mod components;
 mod state;
 
-use crate::components::{CoinFooterBar, HabitList, HomePage, NavBar, SlotMachine, ToastContainer};
+use crate::components::{
+    CoinFooterBar, HabitList, HomePage, NavBar, RewardsPage, SlotMachine, ToastContainer,
+};
 use crate::state::{use_app_state, Page};
 use dioxus::prelude::*;
 
@@ -38,6 +40,7 @@ fn App() -> Element {
                     Page::SlotMachine => rsx! { SlotMachine {} },
                     Page::Habits => rsx! { HabitList {} },
                     Page::CreateHabit => rsx! { NavBar {} },
+                    Page::Rewards => rsx! { RewardsPage {} },
                 }
             }
 

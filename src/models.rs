@@ -125,6 +125,23 @@ impl CalendarColor {
     }
 }
 
+/// Tier for a global reward item in the Rewards page.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum GlobalRewardTier {
+    #[default]
+    Low,
+    Medium,
+    Jackpot,
+}
+
+/// A reward item available on the global Rewards page.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GlobalReward {
+    pub id: Uuid,
+    pub name: String,
+    pub tier: GlobalRewardTier,
+}
+
 /// Toast notification message displayed at top-center of screen.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ToastMessage {

@@ -7,8 +7,8 @@ use uuid::Uuid;
 
 use habit_slot::economy;
 use habit_slot::models::{
-    CoinBalance, Completion, Habit, PityCounter, RewardPool, SlotSymbol, SpinResult, StreakData,
-    ToastMessage,
+    CoinBalance, Completion, GlobalReward, Habit, PityCounter, RewardPool, SlotSymbol, SpinResult,
+    StreakData, ToastMessage,
 };
 use habit_slot::rewards::{self, MilestoneTracker};
 use habit_slot::slot;
@@ -22,6 +22,7 @@ pub enum Page {
     SlotMachine,
     Habits,
     CreateHabit,
+    Rewards,
 }
 
 use std::time::{Duration, Instant};
@@ -39,6 +40,8 @@ pub struct AppState {
     pub milestone_trackers: HashMap<Uuid, MilestoneTracker>,
     /// Active toast notifications queued FIFO.
     pub toasts: Vec<ToastMessage>,
+    /// Global rewards available on the Rewards page.
+    pub global_rewards: Vec<GlobalReward>,
     /// Reels are currently animating.
     pub is_spinning: bool,
     /// Animation strips for each reel column during spin. Each strip contains filler + result symbols.
@@ -63,6 +66,7 @@ impl Default for AppState {
             is_spinning: false,
             animation_strips: None,
             reels_stopped: 0,
+            global_rewards: vec![],
             #[cfg(feature = "db")]
             db: None,
         }
@@ -99,6 +103,7 @@ impl AppState {
             is_spinning: false,
             animation_strips: None,
             reels_stopped: 0,
+            global_rewards: db.load_global_rewards().ok().unwrap_or_default(),
             db: None,
         })
     }

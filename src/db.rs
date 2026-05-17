@@ -7,10 +7,10 @@ use rusqlite::Connection;
 use std::collections::HashSet;
 use uuid::Uuid;
 
-use crate::models::{CoinBalance, Completion, Habit, RewardPool};
+use crate::models::{CoinBalance, Completion, GlobalReward, Habit, RewardPool};
 
 /// Current schema version. Increment on every migration.
-const SCHEMA_VERSION: i32 = 1;
+const SCHEMA_VERSION: i32 = 2;
 
 #[cfg(feature = "db")]
 pub struct Db {
@@ -62,6 +62,9 @@ impl Db {
         )?;
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS pity_counter (id INTEGER PRIMARY KEY CHECK (id = 1), consecutive_losses INTEGER NOT NULL DEFAULT 0);",
+        )?;
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS global_rewards (id TEXT PRIMARY KEY, name TEXT NOT NULL, tier TEXT NOT NULL);",
         )?;
 
         Self::ensure_version(conn)?;
@@ -304,6 +307,56 @@ impl Db {
         )?;
         Ok(())
     }
+
+    // -- Global rewards --
+
+    pub fn insert_global_reward(
+        &self,
+        id: Uuid,
+        name: &str,
+        tier: &crate::models::GlobalRewardTier,
+    ) -> Result<(), rusqlite::Error> {
+        let tier_str = match tier {
+            crate::models::GlobalRewardTier::Low => "low",
+            crate::models::GlobalRewardTier::Medium => "medium",
+            crate::models::GlobalRewardTier::Jackpot => "jackpot",
+        };
+        self.conn.execute(
+            "INSERT OR REPLACE INTO global_rewards (id, name, tier) VALUES (?1, ?2, ?3)",
+            [&id.to_string(), name, tier_str],
+        )?;
+        Ok(())
+    }
+
+    pub fn delete_global_reward(&self, id: Uuid) -> Result<(), rusqlite::Error> {
+        self.conn.execute(
+            "DELETE FROM global_rewards WHERE id = ?1",
+            [&id.to_string()],
+        )?;
+        Ok(())
+    }
+
+    pub fn load_global_rewards(&self) -> Result<Vec<GlobalReward>, rusqlite::Error> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, name, tier FROM global_rewards ORDER BY rowid")?;
+        let rows = stmt.query_map((), |row| {
+            let tier_str: String = row.get(2)?;
+            let tier = match tier_str.as_str() {
+                "low" => crate::models::GlobalRewardTier::Low,
+                "medium" => crate::models::GlobalRewardTier::Medium,
+                "jackpot" => crate::models::GlobalRewardTier::Jackpot,
+                _ => crate::models::GlobalRewardTier::Low,
+            };
+            Ok(GlobalReward {
+                id: Uuid::parse_str(&row.get::<_, String>(0)?).unwrap_or_default(),
+                name: row.get(1)?,
+                tier,
+            })
+        })?;
+
+        rows.collect()
+    }
 }
 
 fn format_date(d: NaiveDate) -> String {
@@ -505,5 +558,55 @@ mod tests {
             .unwrap();
 
         assert_eq!(version, SCHEMA_VERSION);
+    }
+
+    #[test]
+    fn global_reward_crud_roundtrip() {
+        let db = Db::open_memory().unwrap();
+        let id = Uuid::new_v4();
+        let name = "Extra Life".to_string();
+        let tier = crate::models::GlobalRewardTier::Medium;
+
+        db.insert_global_reward(id, &name, &tier).unwrap();
+
+        let rewards = db.load_global_rewards().unwrap();
+        assert_eq!(rewards.len(), 1);
+        assert_eq!(rewards[0].id, id);
+        assert_eq!(rewards[0].name, name);
+        assert_eq!(rewards[0].tier, tier);
+
+        db.delete_global_reward(id).unwrap();
+        assert!(db.load_global_rewards().unwrap().is_empty());
+    }
+
+    #[test]
+    fn global_reward_tier_serialization() {
+        let db = Db::open_memory().unwrap();
+
+        let low_id = Uuid::new_v4();
+        db.insert_global_reward(low_id, "Low Reward", &crate::models::GlobalRewardTier::Low)
+            .unwrap();
+
+        let med_id = Uuid::new_v4();
+        db.insert_global_reward(
+            med_id,
+            "Med Reward",
+            &crate::models::GlobalRewardTier::Medium,
+        )
+        .unwrap();
+
+        let jack_id = Uuid::new_v4();
+        db.insert_global_reward(
+            jack_id,
+            "Jackpot Reward",
+            &crate::models::GlobalRewardTier::Jackpot,
+        )
+        .unwrap();
+
+        let rewards = db.load_global_rewards().unwrap();
+        assert_eq!(rewards.len(), 3);
+        assert_eq!(rewards[0].tier, crate::models::GlobalRewardTier::Low);
+        assert_eq!(rewards[1].tier, crate::models::GlobalRewardTier::Medium);
+        assert_eq!(rewards[2].tier, crate::models::GlobalRewardTier::Jackpot);
     }
 }
