@@ -232,6 +232,8 @@ pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
         payout_coins: effective_payout,
         is_near_miss,
         grayed_high_tier,
+        reward_tier_given: None,
+        reward_note: String::new(),
     }
 }
 
@@ -268,6 +270,8 @@ pub fn resolve_reels(reels: [[SlotSymbol; 3]; 3], bet: u32) -> SpinResult {
         payout_coins: effective_payout,
         is_near_miss,
         grayed_high_tier,
+        reward_tier_given: None,
+        reward_note: String::new(),
     }
 }
 
@@ -761,6 +765,8 @@ mod tests {
             payout_coins: 0,
             is_near_miss: false,
             grayed_high_tier: false,
+            reward_tier_given: None,
+            reward_note: String::new(),
         };
 
         let strips = generate_all_animation_strips(&result);
@@ -784,6 +790,8 @@ mod tests {
             payout_coins: 0,
             is_near_miss: false,
             grayed_high_tier: false,
+            reward_tier_given: None,
+            reward_note: String::new(),
         };
 
         let strips = generate_all_animation_strips(&result);

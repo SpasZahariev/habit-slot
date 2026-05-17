@@ -3,7 +3,7 @@
 
 use std::collections::HashSet;
 
-use crate::models::{RewardPool, RewardTier};
+use crate::models::{GlobalReward, GlobalRewardTier, RewardPool, RewardTier};
 
 /// Streak milestone targets: (target_days, reward_tier).
 pub const STREAK_MILESTONES: [(u32, RewardTier); 5] = [
@@ -134,6 +134,22 @@ pub fn select_reward(pool: &RewardPool, tier: RewardTier) -> Option<String> {
 
     let chosen = rewards.choose(&mut thread_rng())?;
     Some(chosen.clone())
+}
+
+/// Select a random global reward from the pool matching the given tier.
+/// Returns None when no rewards exist for the requested tier.
+pub fn select_global_reward_by_tier(
+    global_rewards: &[GlobalReward],
+    tier: GlobalRewardTier,
+) -> Option<GlobalReward> {
+    use rand::seq::SliceRandom;
+    use rand::thread_rng;
+
+    let matching: Vec<&GlobalReward> = global_rewards.iter().filter(|r| r.tier == tier).collect();
+    if matching.is_empty() {
+        return None;
+    }
+    matching.choose(&mut thread_rng()).map(|r| (*r).clone())
 }
 
 /// Get the reward tier for a claimed milestone.
@@ -294,5 +310,97 @@ mod tests {
         assert!(result.newly_claimed.is_none());
         assert!(tracker.claimed_streak_tiers.is_empty());
         assert!(tracker.claimed_completion_tiers.is_empty());
+    }
+
+    #[test]
+    fn select_global_reward_by_tier_returns_matching_tier() {
+        use crate::models::{GlobalReward, GlobalRewardTier};
+        use uuid::Uuid;
+
+        let rewards = vec![
+            GlobalReward {
+                id: Uuid::new_v4(),
+                name: "Low Reward".to_string(),
+                tier: GlobalRewardTier::Low,
+            },
+            GlobalReward {
+                id: Uuid::new_v4(),
+                name: "Med Reward".to_string(),
+                tier: GlobalRewardTier::Medium,
+            },
+            GlobalReward {
+                id: Uuid::new_v4(),
+                name: "Jackpot Reward".to_string(),
+                tier: GlobalRewardTier::Jackpot,
+            },
+        ];
+
+        // Select from Medium tier - should return the med reward
+        for _ in 0..10 {
+            let selected = select_global_reward_by_tier(&rewards, GlobalRewardTier::Medium);
+            assert!(selected.is_some());
+            assert_eq!(selected.unwrap().name, "Med Reward");
+        }
+    }
+
+    #[test]
+    fn select_global_reward_by_tier_returns_none_for_empty_pool() {
+        let rewards: Vec<GlobalReward> = vec![];
+        let result = select_global_reward_by_tier(&rewards, GlobalRewardTier::Low);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn select_global_reward_by_tier_returns_none_for_missing_tier() {
+        use crate::models::{GlobalReward, GlobalRewardTier};
+        use uuid::Uuid;
+
+        let rewards = vec![GlobalReward {
+            id: Uuid::new_v4(),
+            name: "Low Reward".to_string(),
+            tier: GlobalRewardTier::Low,
+        }];
+
+        // Request Medium when only Low exists
+        let result = select_global_reward_by_tier(&rewards, GlobalRewardTier::Medium);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn select_global_reward_by_tier_selects_random_from_multiple_matching() {
+        use crate::models::{GlobalReward, GlobalRewardTier};
+        use uuid::Uuid;
+
+        let rewards = vec![
+            GlobalReward {
+                id: Uuid::new_v4(),
+                name: "Low A".to_string(),
+                tier: GlobalRewardTier::Low,
+            },
+            GlobalReward {
+                id: Uuid::new_v4(),
+                name: "Low B".to_string(),
+                tier: GlobalRewardTier::Low,
+            },
+        ];
+
+        // Both results should be Low tier but names may differ based on random selection
+        let mut seen_a = false;
+        let mut seen_b = false;
+        for _ in 0..100 {
+            let selected = select_global_reward_by_tier(&rewards, GlobalRewardTier::Low);
+            assert!(selected.is_some());
+            let name = selected.unwrap().name;
+            if name == "Low A" {
+                seen_a = true;
+            } else if name == "Low B" {
+                seen_b = true;
+            }
+            if seen_a && seen_b {
+                break;
+            }
+        }
+        assert!(seen_a, "should eventually see Low A");
+        assert!(seen_b, "should eventually see Low B");
     }
 }

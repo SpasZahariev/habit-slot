@@ -61,6 +61,10 @@ pub struct SpinResult {
     pub payout_coins: u32,
     pub is_near_miss: bool,
     pub grayed_high_tier: bool,
+    /// Which reward tier was actually given to the user from global rewards.
+    pub reward_tier_given: Option<RewardTier>,
+    /// Human-readable note describing the reward (e.g. "Claimed: Coffee Break").
+    pub reward_note: String,
 }
 
 #[derive(Debug, Clone)]
@@ -144,6 +148,13 @@ pub enum GlobalRewardTier {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalReward {
     pub id: Uuid,
+    pub name: String,
+    pub tier: GlobalRewardTier,
+}
+
+/// Represents a global reward that was claimed from a slot spin result.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ClaimedReward {
     pub name: String,
     pub tier: GlobalRewardTier,
 }
@@ -250,5 +261,57 @@ mod toast_tests {
         mgr.dismiss_expired();
         assert_eq!(mgr.toasts.len(), 1);
         assert_eq!(mgr.toasts[0].symbol_name, "High0 x3");
+    }
+
+    #[test]
+    fn claimed_reward_construction() {
+        let reward = ClaimedReward {
+            name: "Coffee Break".to_string(),
+            tier: GlobalRewardTier::Low,
+        };
+        assert_eq!(reward.name, "Coffee Break");
+        assert_eq!(reward.tier, GlobalRewardTier::Low);
+    }
+
+    #[test]
+    fn claimed_reward_clone_and_partial_eq() {
+        let r1 = ClaimedReward {
+            name: "Day Off".to_string(),
+            tier: GlobalRewardTier::Medium,
+        };
+        let r2 = r1.clone();
+        assert_eq!(r1, r2);
+    }
+
+    #[test]
+    fn spin_result_new_fields_defaults() {
+        let result = SpinResult {
+            reels: Default::default(),
+            symbols_matched: None,
+            tier: RewardTier::None,
+            payout_coins: 0,
+            is_near_miss: false,
+            grayed_high_tier: false,
+            reward_tier_given: None,
+            reward_note: String::new(),
+        };
+        assert!(result.reward_tier_given.is_none());
+        assert_eq!(result.reward_note, "");
+    }
+
+    #[test]
+    fn spin_result_with_reward_fields() {
+        let result = SpinResult {
+            reels: Default::default(),
+            symbols_matched: None,
+            tier: RewardTier::Small,
+            payout_coins: 4,
+            is_near_miss: false,
+            grayed_high_tier: false,
+            reward_tier_given: Some(RewardTier::Small),
+            reward_note: "Claimed: Coffee Break".to_string(),
+        };
+        assert_eq!(result.reward_tier_given, Some(RewardTier::Small));
+        assert_eq!(result.reward_note, "Claimed: Coffee Break");
     }
 }
