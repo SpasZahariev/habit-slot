@@ -1,13 +1,13 @@
 use dioxus::prelude::*;
 
 use crate::components::RewardModal;
-use crate::models::GlobalRewardTier;
 use crate::state::AppState;
+use habit_slot::models::GlobalRewardTier;
 use uuid::Uuid;
 
 #[component]
 pub fn RewardsPage() -> Element {
-    let app_state = use_context::<Signal<AppState>>();
+    let mut app_state = use_context::<Signal<AppState>>();
     let rewards = app_state.read().global_rewards.clone();
 
     let mut sorted: Vec<_> = rewards;
@@ -71,7 +71,7 @@ pub fn RewardsPage() -> Element {
 
 #[component]
 fn DeleteRewardButton(reward_id: Uuid) -> Element {
-    let app_state = use_context::<Signal<AppState>>();
+    let mut app_state = use_context::<Signal<AppState>>();
 
     rsx! {
         button {

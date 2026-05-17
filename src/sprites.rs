@@ -1,36 +1,115 @@
-use crate::models::SlotSymbol;
+use crate::models::{RewardTier, SlotSymbol};
 
-const KEBAB_URI: &str = concat!("data:image/png;base64,", include_str!("kebab_base64.txt"));
-const TACO_URI: &str = concat!("data:image/png;base64,", include_str!("taco_base64.txt"));
-const PIZZA_URI: &str = concat!("data:image/png;base64,", include_str!("pizza_base64.txt"));
-const SUSHI_URI: &str = concat!("data:image/png;base64,", include_str!("sushi_base64.txt"));
-const SASHIMI_URI: &str = concat!("data:image/png;base64,", include_str!("sashimi_base64.txt"));
-const PANCAKE_URI: &str = concat!("data:image/png;base64,", include_str!("pancake_base64.txt"));
+const LOW_HEART_URI: &str = concat!(
+    "data:image/png;base64,",
+    include_str!("low_heart_base64.txt")
+);
+const MED_CRYSTAL_URI: &str = concat!(
+    "data:image/png;base64,",
+    include_str!("med_crystal_base64.txt")
+);
+const HIGH_CHEST_URI: &str = concat!(
+    "data:image/png;base64,",
+    include_str!("high_chest_base64.txt")
+);
+
+/// Single source of truth for all slot symbol properties.
+/// To add a new symbol: add an entry to this array and update the SlotSymbol enum.
+pub static SYMBOLS: [SpriteConfig; 6] = [
+    SpriteConfig {
+        display_name: "Heart",
+        tier: RewardTier::Small,
+        weight: 25.0,
+        payout_multiplier: 2,
+        sprite_uri: LOW_HEART_URI,
+        gray_at_low_bet: false,
+    },
+    SpriteConfig {
+        display_name: "Heart",
+        tier: RewardTier::Small,
+        weight: 20.0,
+        payout_multiplier: 4,
+        sprite_uri: LOW_HEART_URI,
+        gray_at_low_bet: false,
+    },
+    SpriteConfig {
+        display_name: "Heart",
+        tier: RewardTier::Small,
+        weight: 15.0,
+        payout_multiplier: 3,
+        sprite_uri: LOW_HEART_URI,
+        gray_at_low_bet: false,
+    },
+    SpriteConfig {
+        display_name: "Crystal",
+        tier: RewardTier::Medium,
+        weight: 18.0,
+        payout_multiplier: 8,
+        sprite_uri: MED_CRYSTAL_URI,
+        gray_at_low_bet: true,
+    },
+    SpriteConfig {
+        display_name: "Crystal",
+        tier: RewardTier::Medium,
+        weight: 12.0,
+        payout_multiplier: 12,
+        sprite_uri: MED_CRYSTAL_URI,
+        gray_at_low_bet: true,
+    },
+    SpriteConfig {
+        display_name: "Chest",
+        tier: RewardTier::Jackpot,
+        weight: 10.0,
+        payout_multiplier: 50,
+        sprite_uri: HIGH_CHEST_URI,
+        gray_at_low_bet: true,
+    },
+];
+
+/// Per-symbol configuration. Each array index maps to a SlotSymbol variant in order.
+#[derive(Clone, Copy)]
+pub struct SpriteConfig {
+    pub display_name: &'static str,
+    pub tier: RewardTier,
+    pub weight: f64,
+    pub payout_multiplier: u32,
+    pub sprite_uri: &'static str,
+    /// Gray out this symbol when matched at less than max bet.
+    pub gray_at_low_bet: bool,
+}
+
+impl SlotSymbol {
+    fn index(self) -> usize {
+        match self {
+            SlotSymbol::Low0 => 0,
+            SlotSymbol::Low1 => 1,
+            SlotSymbol::Low2 => 2,
+            SlotSymbol::Mid0 => 3,
+            SlotSymbol::Mid1 => 4,
+            SlotSymbol::High0 => 5,
+        }
+    }
+
+    pub fn config(self) -> &'static SpriteConfig {
+        &SYMBOLS[self.index()]
+    }
+}
 
 pub fn symbol_sprite_uri(symbol: &SlotSymbol) -> &'static str {
-    match symbol {
-        SlotSymbol::Kebab => KEBAB_URI,
-        SlotSymbol::Taco => TACO_URI,
-        SlotSymbol::Pizza => PIZZA_URI,
-        SlotSymbol::Sushi => SUSHI_URI,
-        SlotSymbol::Sashimi => SASHIMI_URI,
-        SlotSymbol::Pancake => PANCAKE_URI,
-    }
+    symbol.config().sprite_uri
 }
 
 pub fn symbol_display_name(symbol: &SlotSymbol) -> &'static str {
-    match symbol {
-        SlotSymbol::Kebab => "Kebab",
-        SlotSymbol::Taco => "Taco",
-        SlotSymbol::Pizza => "Pizza",
-        SlotSymbol::Sushi => "Sushi",
-        SlotSymbol::Sashimi => "Sashimi",
-        SlotSymbol::Pancake => "Pancake",
-    }
+    symbol.config().display_name
 }
 
+const GOLD_COINS_URI: &str = concat!(
+    "data:image/png;base64,",
+    include_str!("gold_coins_base64.txt")
+);
+
 pub fn coin_icon_uri() -> &'static str {
-    PANCAKE_URI
+    GOLD_COINS_URI
 }
 
 #[cfg(test)]
@@ -38,14 +117,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn all_symbols_map_to_non_empty_uris() {
+    fn all_symbols_map_to_valid_uris() {
         let symbols = [
-            SlotSymbol::Kebab,
-            SlotSymbol::Taco,
-            SlotSymbol::Pizza,
-            SlotSymbol::Sushi,
-            SlotSymbol::Sashimi,
-            SlotSymbol::Pancake,
+            SlotSymbol::Low0,
+            SlotSymbol::Low1,
+            SlotSymbol::Low2,
+            SlotSymbol::Mid0,
+            SlotSymbol::Mid1,
+            SlotSymbol::High0,
         ];
 
         for symbol in &symbols {
@@ -53,7 +132,7 @@ mod tests {
             assert!(!uri.is_empty(), "Sprite URI for {:?} is empty", symbol);
             assert!(
                 uri.starts_with("data:image/png;base64,"),
-                "URI should be a data URL: {:?}",
+                "URI should be a PNG data URI: {:?}",
                 symbol
             );
         }
@@ -61,16 +140,16 @@ mod tests {
 
     #[test]
     fn display_names_are_correct() {
-        assert_eq!(symbol_display_name(&SlotSymbol::Kebab), "Kebab");
-        assert_eq!(symbol_display_name(&SlotSymbol::Taco), "Taco");
-        assert_eq!(symbol_display_name(&SlotSymbol::Pizza), "Pizza");
-        assert_eq!(symbol_display_name(&SlotSymbol::Sushi), "Sushi");
-        assert_eq!(symbol_display_name(&SlotSymbol::Sashimi), "Sashimi");
-        assert_eq!(symbol_display_name(&SlotSymbol::Pancake), "Pancake");
+        assert_eq!(symbol_display_name(&SlotSymbol::Low0), "Heart");
+        assert_eq!(symbol_display_name(&SlotSymbol::Low1), "Heart");
+        assert_eq!(symbol_display_name(&SlotSymbol::Low2), "Heart");
+        assert_eq!(symbol_display_name(&SlotSymbol::Mid0), "Crystal");
+        assert_eq!(symbol_display_name(&SlotSymbol::Mid1), "Crystal");
+        assert_eq!(symbol_display_name(&SlotSymbol::High0), "Chest");
     }
 
     #[test]
-    fn coin_icon_returns_pancake_uri() {
-        assert_eq!(coin_icon_uri(), symbol_sprite_uri(&SlotSymbol::Pancake));
+    fn coin_icon_returns_data_uri() {
+        assert!(coin_icon_uri().starts_with("data:image/png;base64,"));
     }
 }

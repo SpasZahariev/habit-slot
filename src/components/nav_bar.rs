@@ -11,6 +11,7 @@ pub fn NavBar() -> Element {
         Page::SlotMachine => "Slot Machine",
         Page::Habits => "Habits",
         Page::CreateHabit => "Create Habit",
+        Page::Rewards => "Rewards",
     };
 
     rsx! {

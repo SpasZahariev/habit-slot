@@ -4,6 +4,34 @@ use dioxus::prelude::*;
 use habit_slot::models::{SlotSymbol, SpinResult};
 use habit_slot::sprites::symbol_sprite_uri;
 
+/// Cell dimensions for 32x32 PNG icons with padding. Square cells.
+const CELL_W: u32 = 56;
+const CELL_H: u32 = 56;
+
+/// Gap between cells in a reel strip.
+const CELL_GAP: u32 = 4;
+
+/// Total height of one cell + gap for animation calculation.
+const CELL_STEP: u32 = CELL_H + CELL_GAP; // 60
+
+/// Top/bottom padding inside the reel strip container.
+const STRIP_PADDING: u32 = 8;
+
+/// Viewport height: 3 visible cells + 2 gaps + padding.
+const VIEWPORT_HEIGHT: u32 = CELL_H * 3 + CELL_GAP * 2 + STRIP_PADDING * 2; // 200
+
+/// Viewport width matches cell width.
+const VIEWPORT_WIDTH: u32 = CELL_W;
+
+/// Animation translate distance: scrolls past all filler symbols to land on result.
+/// With 12 filler + 3 result = 15 cells. Final position shows last 3, so scroll = 12 * step - padding.
+fn animation_translate_distance() -> i32 {
+    // Strip has ANIMATION_FILLER_COUNT + 3 symbols (15 total).
+    // At rest position, viewport shows the last 3 cells.
+    // Distance to scroll = (filler_count) * cell_step
+    12 * CELL_STEP as i32 - STRIP_PADDING as i32
+}
+
 #[component]
 pub fn SlotMachine() -> Element {
     let mut app_state = use_context::<Signal<AppState>>();
@@ -28,22 +56,24 @@ pub fn SlotMachine() -> Element {
         });
     }
 
+    let anim_dist = animation_translate_distance();
+
     rsx! {
         style { r"
             .reel-column-viewport {{
                 position: relative;
                 overflow: hidden;
-                width: 70px;
-                height: 176px;
+                width: {VIEWPORT_WIDTH}px;
+                height: {VIEWPORT_HEIGHT}px;
                 flex-shrink: 0;
             }}
 
             .reel-strip {{
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
-                padding-top: 5px;
-                padding-bottom: 5px;
+                gap: {CELL_GAP}px;
+                padding-top: {STRIP_PADDING}px;
+                padding-bottom: {STRIP_PADDING}px;
             }}
 
             @keyframes reel-spin-0 {{
@@ -55,7 +85,7 @@ pub fn SlotMachine() -> Element {
                     filter: blur(1px);
                 }}
                 100% {{
-                    transform: translateY(-653px);
+                    transform: translateY({anim_dist}px);
                     filter: blur(0px);
                 }}
             }}
@@ -69,7 +99,7 @@ pub fn SlotMachine() -> Element {
                     filter: blur(1px);
                 }}
                 100% {{
-                    transform: translateY(-653px);
+                    transform: translateY({anim_dist}px);
                     filter: blur(0px);
                 }}
             }}
@@ -83,7 +113,7 @@ pub fn SlotMachine() -> Element {
                     filter: blur(1px);
                 }}
                 100% {{
-                    transform: translateY(-653px);
+                    transform: translateY({anim_dist}px);
                     filter: blur(0px);
                 }}
             }}
@@ -101,7 +131,7 @@ pub fn SlotMachine() -> Element {
             }}
 
             .reel-strip-static {{
-                transform: translateY(-653px);
+                transform: translateY({anim_dist}px);
             }}
         " }
 
@@ -215,11 +245,11 @@ fn ReelColumnAnimated(
 #[component]
 fn ReelSymbolCell(symbol: SlotSymbol, is_winning: bool, is_grayed: bool) -> Element {
     let cell_class = if is_grayed && is_winning {
-        "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50"
+        format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50")
     } else if is_winning {
-        "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]"
+        format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]")
     } else {
-        "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md"
+        format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md")
     };
 
     rsx! {
@@ -227,7 +257,7 @@ fn ReelSymbolCell(symbol: SlotSymbol, is_winning: bool, is_grayed: bool) -> Elem
             class: cell_class,
             img {
                 src: symbol_sprite_uri(&symbol),
-                class: "w-[28px] h-[24px] object-contain",
+                class: "w-8 h-8 object-contain",
             }
         }
     }
@@ -236,9 +266,9 @@ fn ReelSymbolCell(symbol: SlotSymbol, is_winning: bool, is_grayed: bool) -> Elem
 #[component]
 fn Reels(spin_result: Option<SpinResult>) -> Element {
     let default_reels: [[SlotSymbol; 3]; 3] = [
-        [SlotSymbol::Kebab, SlotSymbol::Taco, SlotSymbol::Pizza],
-        [SlotSymbol::Sushi, SlotSymbol::Kebab, SlotSymbol::Pancake],
-        [SlotSymbol::Taco, SlotSymbol::Sashimi, SlotSymbol::Kebab],
+        [SlotSymbol::Low0, SlotSymbol::Low1, SlotSymbol::Low2],
+        [SlotSymbol::Mid0, SlotSymbol::Low0, SlotSymbol::High0],
+        [SlotSymbol::Low1, SlotSymbol::Mid1, SlotSymbol::Low0],
     ];
 
     let reels = spin_result
@@ -286,11 +316,11 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         .map(|row| {
             let is_winning_cell = winning_row == Some(row);
             let cell_class = if is_grayed && is_winning_cell {
-                "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50".to_string()
+                format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md grayscale brightness-50 opacity-50")
             } else if is_winning_cell {
-                "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]".to_string()
+                format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md ring-2 ring-[#00f5d4]")
             } else {
-                "flex-shrink-0 w-[70px] h-[50px] flex items-center justify-center bg-[#2a1a4e] rounded-md".to_string()
+                format!("flex-shrink-0 w-[{CELL_W}px] h-[{CELL_H}px] flex items-center justify-center bg-[#2a1a4e] rounded-md")
             };
             ReelCellData {
                 uri: symbol_sprite_uri(&reels[col][row]),
@@ -309,7 +339,7 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
                         class: cell.cell_class,
                         img {
                             src: cell.uri,
-                            class: "w-[28px] h-[24px] object-contain",
+                            class: "w-8 h-8 object-contain",
                         }
                     }
                 }

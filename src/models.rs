@@ -7,12 +7,12 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SlotSymbol {
     #[default]
-    Kebab,
-    Taco,
-    Pizza,
-    Sushi,
-    Sashimi,
-    Pancake,
+    Low0,
+    Low1,
+    Low2,
+    Mid0,
+    Mid1,
+    High0,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -187,9 +187,9 @@ mod toast_tests {
         let mut mgr = ToastManager::default();
         assert!(mgr.toasts.is_empty());
 
-        mgr.push("Pancake x3".to_string(), 25);
+        mgr.push("Low0 x3".to_string(), 25);
         assert_eq!(mgr.toasts.len(), 1);
-        assert_eq!(mgr.toasts[0].symbol_name, "Pancake x3");
+        assert_eq!(mgr.toasts[0].symbol_name, "Low0 x3");
         assert_eq!(mgr.toasts[0].payout, 25);
     }
 
@@ -197,20 +197,20 @@ mod toast_tests {
     fn push_fifo_ordering() {
         let mut mgr = ToastManager::default();
 
-        mgr.push("Kebab x3".to_string(), 2);
-        mgr.push("Sushi x3".to_string(), 8);
-        mgr.push("Pancake x3".to_string(), 50);
+        mgr.push("Low0 x3".to_string(), 2);
+        mgr.push("Mid0 x3".to_string(), 8);
+        mgr.push("High0 x3".to_string(), 50);
 
         assert_eq!(mgr.toasts.len(), 3);
-        assert_eq!(mgr.toasts[0].symbol_name, "Kebab x3");
-        assert_eq!(mgr.toasts[1].symbol_name, "Sushi x3");
-        assert_eq!(mgr.toasts[2].symbol_name, "Pancake x3");
+        assert_eq!(mgr.toasts[0].symbol_name, "Low0 x3");
+        assert_eq!(mgr.toasts[1].symbol_name, "Mid0 x3");
+        assert_eq!(mgr.toasts[2].symbol_name, "High0 x3");
     }
 
     #[test]
     fn dismiss_expired_removes_old() {
         let mut mgr = ToastManager::default();
-        mgr.push("Kebab x3".to_string(), 2);
+        mgr.push("Low0 x3".to_string(), 2);
 
         let old = Instant::now().checked_sub(Duration::from_secs(10)).unwrap();
         mgr.toasts[0].created_at = old;
@@ -222,7 +222,7 @@ mod toast_tests {
     #[test]
     fn dismiss_expired_keeps_recent() {
         let mut mgr = ToastManager::default();
-        mgr.push("Sushi x3".to_string(), 8);
+        mgr.push("Mid0 x3".to_string(), 8);
 
         // Created just now, within timeout — should not be removed
         mgr.dismiss_expired();
@@ -234,15 +234,15 @@ mod toast_tests {
         let mut mgr = ToastManager::default();
 
         // First toast is old
-        mgr.push("Kebab x3".to_string(), 2);
+        mgr.push("Low0 x3".to_string(), 2);
         let old = Instant::now().checked_sub(Duration::from_secs(10)).unwrap();
         mgr.toasts[0].created_at = old;
 
         // Second toast is recent
-        mgr.push("Pancake x3".to_string(), 50);
+        mgr.push("High0 x3".to_string(), 50);
 
         mgr.dismiss_expired();
         assert_eq!(mgr.toasts.len(), 1);
-        assert_eq!(mgr.toasts[0].symbol_name, "Pancake x3");
+        assert_eq!(mgr.toasts[0].symbol_name, "High0 x3");
     }
 }

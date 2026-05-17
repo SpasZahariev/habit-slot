@@ -19,7 +19,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        pixel: ['"Pixelify Sans"', 'sans-serif'],
+        pixel: ['Silkscreen', 'sans-serif'],
       },
       fontSize: {
         'title': '55px',

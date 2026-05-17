@@ -12,7 +12,7 @@ pub fn CoinFooterBar() -> Element {
             class: "fixed bottom-0 left-0 right-0 flex items-center justify-center gap-2 py-3 bg-[#0f0520] border-t-2 border-[#ff2d78]",
             img {
                 src: coin_icon_uri(),
-                class: "w-[24px] h-[24px] object-contain",
+                class: "w-6 h-6 object-contain",
                 alt: "Coin",
             }
             span {
