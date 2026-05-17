@@ -25,6 +25,18 @@ pub enum RewardTier {
     ExtraRoll,
 }
 
+impl std::fmt::Display for RewardTier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RewardTier::None => write!(f, "None"),
+            RewardTier::Small => write!(f, "Small"),
+            RewardTier::Medium => write!(f, "Medium"),
+            RewardTier::Jackpot => write!(f, "Jackpot"),
+            RewardTier::ExtraRoll => write!(f, "ExtraRoll"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Habit {
     pub id: Uuid,
