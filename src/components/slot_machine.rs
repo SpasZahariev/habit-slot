@@ -124,58 +124,72 @@ pub fn SlotMachine() -> Element {
         " }
 
         div {
-            class: "bet-selector flex justify-center gap-2 mb-3",
-            for i in 1..=3u32 {
-                button {
-                    class: format!("px-4 py-2 rounded-lg font-bold text-sm transition-all {}", 
-                        if spin_bet() == i {
-                            "bg-[#ff2d78] text-white shadow-lg shadow-[#ff2d78]/30"
-                        } else {
-                           if balance_u32 >= i && !is_spinning {
-                                "bg-[#2a1a4e] text-[#7a6a9e] hover:bg-[#3a2a5e] hover:text-white"
-                            } else {
-                                "bg-[#1a0a2e] text-[#3a2a5e] cursor-not-allowed"
-                            }
-                        }
-                    ),
-                    disabled: balance_u32 < i || is_spinning,
-                    onclick: move |_| { spin_bet.set(i) },
-                    { format!("{} Coin{}", i, if i == 1 { "" } else { "s" }) }
-                }
-            }
+             p {
+                 style: "color: rgba(240,230,255,0.3); font-family: Silkscreen; font-size: 0.85rem; text-align: center; margin-bottom: 15px",
+                 "Spend more coins to qualify for Higher Tier rewards."
+             }
         }
 
-        div {
-            class: "slot-machine p-4 bg-[#1a0a2e] rounded-xl border-2 border-[#ff2d78] w-[96%]",
-
-            if is_spinning && animation_strips.is_some() {
-                AnimatedReels {
-                    strips: animation_strips.unwrap(),
-                    reels_stopped,
-                    spin_result: last_result.clone()
-                }
-            } else {
-                Reels { spin_result: last_result.clone() }
-            }
+       div {
+            class: "flex flex-col items-center w-full relative",
 
             div {
-                class: "flex justify-center mt-4",
-                LeverSlider {
-                    is_disabled: is_spinning || balance_u32 < spin_bet(),
-                    on_trigger: Callback::new(move |_| {
-                        let bet = spin_bet();
-                        app_state.with_mut(|state| {
-                            let _ = state.execute_spin(bet);
-                        });
-                    })
+                class: "bet-selector flex justify-center gap-2 mb-3",
+                for i in 1..=3u32 {
+                    button {
+                        class: format!("px-4 py-2 rounded-lg font-bold text-sm transition-all {}",
+                            if spin_bet() == i {
+                                "bg-[#ff2d78] text-white shadow-lg shadow-[#ff2d78]/30"
+                            } else {
+                               if balance_u32 >= i && !is_spinning {
+                                    "bg-[#2a1a4e] text-[#7a6a9e] hover:bg-[#3a2a5e] hover:text-white"
+                                } else {
+                                    "bg-[#1a0a2e] text-[#3a2a5e] cursor-not-allowed"
+                                }
+                            }
+                        ),
+                        disabled: balance_u32 < i || is_spinning,
+                        onclick: move |_| { spin_bet.set(i) },
+                        { format!("{} Coin{}", i, if i == 1 { "" } else { "s" }) }
+                    }
                 }
+            }
+
+           div {
+                class: "slot-machine relative p-4 bg-[#1a0a2e] rounded-xl border-2 border-[#ff2d78] w-[96%]",
+
+                if is_spinning && animation_strips.is_some() {
+                    AnimatedReels {
+                        strips: animation_strips.unwrap(),
+                        reels_stopped,
+                        spin_result: last_result.clone()
+                    }
+                } else {
+                    Reels { spin_result: last_result.clone() }
+                }
+
+                div {
+                    class: "flex justify-center mt-4",
+                    LeverSlider {
+                        is_disabled: is_spinning || balance_u32 < spin_bet(),
+                        on_trigger: Callback::new(move |_| {
+                            let bet = spin_bet();
+                            app_state.with_mut(|state| {
+                                let _ = state.execute_spin(bet);
+                            });
+                        })
+                    }
+                }
+
+            }
+
+           if !is_spinning {
+                SpinResultDisplay { spin_result: last_result }
             }
 
         }
 
-        if !is_spinning {
-            SpinResultDisplay { spin_result: last_result }
-        }
+
     }
 }
 
