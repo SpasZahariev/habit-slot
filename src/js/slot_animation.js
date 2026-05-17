@@ -33,7 +33,7 @@
         const spin = () => {
           y += SPEED;
           if (y >= totalH) y = y % totalH;
-          strip.style.transform = "translateY(" + -y + "px)";
+          strip.style.transform = "translateY(" + y + "px)";
           rafId = requestAnimationFrame(spin);
         };
 
@@ -91,7 +91,7 @@
 
           if (progress >= 1) {
             // Snap to exact target
-            strip.style.transform = "translateY(" + -targetOffset + "px)";
+            strip.style.transform = "translateY(" + targetOffset + "px)";
             strip.style.filter = "";
             const newState = stateMap.get(wrapperEl);
             if (newState) newState.rafId = null;
@@ -105,7 +105,7 @@
           // Wrap around for seamless scroll
           if (y >= totalH) y = y % totalH;
 
-          strip.style.transform = "translateY(" + -y + "px)";
+          strip.style.transform = "translateY(" + y + "px)";
 
           // Motion blur fades as deceleration progresses
           const blur = 2 * (1 - easedProgress);

@@ -55,49 +55,49 @@ pub fn SlotMachine() -> Element {
         });
     }
 
-    /// Negative translateY value: scrolls the strip upward to reveal result symbols.
+    /// Negative translateY value for the end position of the animation.
     let anim_dist = -animation_translate_distance();
 
     rsx! {
         style { r"
             @keyframes reel-spin-0 {{
                 0% {{
-                    transform: translateY(0);
+                    transform: translateY({anim_dist}px);
                     filter: blur(1.5px);
                 }}
                 80% {{
                     filter: blur(1px);
                 }}
                 100% {{
-                    transform: translateY({anim_dist}px);
+                    transform: translateY(0);
                     filter: blur(0px);
                 }}
             }}
 
             @keyframes reel-spin-1 {{
                 0% {{
-                    transform: translateY(0);
+                    transform: translateY({anim_dist}px);
                     filter: blur(1.5px);
                 }}
                 80% {{
                     filter: blur(1px);
                 }}
                 100% {{
-                    transform: translateY({anim_dist}px);
+                    transform: translateY(0);
                     filter: blur(0px);
                 }}
             }}
 
             @keyframes reel-spin-2 {{
                 0% {{
-                    transform: translateY(0);
+                    transform: translateY({anim_dist}px);
                     filter: blur(1.5px);
                 }}
                 80% {{
                     filter: blur(1px);
                 }}
                 100% {{
-                    transform: translateY({anim_dist}px);
+                    transform: translateY(0);
                     filter: blur(0px);
                 }}
             }}
@@ -118,65 +118,7 @@ pub fn SlotMachine() -> Element {
             }}
 
             .reel-strip-static {{
-                transform: translateY({anim_dist}px);
-            }}
-                80% {{
-                    filter: blur(1px);
-                }}
-                100% {{
-                    transform: translateY({anim_dist}px);
-                    filter: blur(0px);
-                }}
-            }}
-
-            @keyframes reel-spin-1 {{
-                0% {{
-                    transform: translateY(0);
-                    filter: blur(1.5px);
-                }}
-                80% {{
-                    filter: blur(1px);
-                }}
-                100% {{
-                    transform: translateY({anim_dist}px);
-                    filter: blur(0px);
-                }}
-            }}
-
-            @keyframes reel-spin-2 {{
-                0% {{
-                    transform: translateY(0);
-                    filter: blur(1.5px);
-                }}
-                80% {{
-                    filter: blur(1px);
-                }}
-                100% {{
-                    transform: translateY({anim_dist}px);
-                    filter: blur(0px);
-                }}
-            }}
-
-            .reel-strip-anim-0 {{
-                will-change: transform, filter;
                 transform: translateY(0);
-                animation: reel-spin-0 2.5s cubic-bezier(0.2, 0.8, 0.3, 1) 0.1s forwards;
-            }}
-
-            .reel-strip-anim-1 {{
-                will-change: transform, filter;
-                transform: translateY(0);
-                animation: reel-spin-1 3.7s cubic-bezier(0.2, 0.8, 0.3, 1) 0.1s forwards;
-            }}
-
-            .reel-strip-anim-2 {{
-                will-change: transform, filter;
-                transform: translateY(0);
-                animation: reel-spin-2 4.9s cubic-bezier(0.2, 0.8, 0.3, 1) 0.1s forwards;
-            }}
-
-            .reel-strip-static {{
-                transform: translateY({anim_dist}px);
             }}
         " }
 
