@@ -1,6 +1,6 @@
 # Progress Tracker
 
-All issues up to #26 are DONE.
+All issues up to #35 are DONE.
 
 - [x] Issue #1: PRD: Casino Habit Tracker MVP — DONE
 - [x] Issue #10: SQLite persistence layer with wasm-sqlite — DONE
@@ -20,7 +20,16 @@ All issues up to #26 are DONE.
 - [x] Issue #24: Habit creation page with custom rewards and long-term goals — DONE
 - [x] Issue #25: Toast notifications + long-term reward claiming on completion — DONE
 - [x] Issue #26: PRD: Slot machine page revamp — food sprites, lever spin, reel animations, toasts, coin footer — DONE
+- [x] Issue #27: Slice 1: Sprite symbols on reels + coin footer + remove title — DONE
+- [x] Issue #28: Slice 2: Toast notification system — DONE
+- [x] Issue #29: Slice 3: Reel spin animation with staggered timing — DONE
+- [x] Issue #30: Slice 4: Lever slider replaces SPIN button — DONE
+- [x] Issue #31: PRD: Global Rewards Page — DONE
+- [x] Issue #32: Rewards page foundation + navigation — DONE
+- [x] Issue #33: Add rewards via modal + list display — DONE
+- [x] Issue #34: Delete rewards — DONE
+- [x] Issue #35: PRD: Habits Page Redesign — DONE
 
 ---
 
-Next: Begin with Slice 1 (Issue #27)
+Next: Begin with Slice 1 (Issue #36)
