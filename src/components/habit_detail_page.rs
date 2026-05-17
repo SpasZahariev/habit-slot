@@ -22,6 +22,7 @@ pub fn HabitDetailPage(habit_id: String) -> Element {
         rsx! {
             div {
                 class: "habit-detail-page w-full max-w-[420px] mx-auto",
+                style: "padding: 16px; padding-bottom: 32px;",
 
                 div {
                     style: "background: #2a1a4e; border-radius: 12px; padding: 20px; margin-bottom: 12px; border: 1px solid rgba(255,45,120,0.2);",
@@ -36,7 +37,12 @@ pub fn HabitDetailPage(habit_id: String) -> Element {
                     }
                 }
 
-                StreakCalendar { habit }
+                CoinRewardSelector { habit_id: habit_uuid, current_reward: habit.coin_reward }
+
+                div {
+                    style: "background: #0f0520; border-radius: 8px; padding: 12px;",
+                    StreakCalendarInner { habit }
+                }
 
                 div {
                     style: "margin-top: 16px; margin-bottom: 24px;",
@@ -87,10 +93,44 @@ fn StatBox(label: &'static str, value: String) -> Element {
     }
 }
 
-/// Binary calendar heatmap: green for completed days, dark gray otherwise.
+/// Horizontal coin reward selector with colored buttons.
+#[component]
+fn CoinRewardSelector(habit_id: Uuid, current_reward: u32) -> Element {
+    let mut app_state = use_context::<Signal<AppState>>();
+
+    rsx! {
+        div {
+            style: "background: #2a1a4e; border-radius: 12px; padding: 16px; margin-bottom: 8px; border: 1px solid rgba(255,45,120,0.2);",
+            div {
+                style: "display: flex; flex-direction: column; gap: 6px; margin-bottom: 3px;",
+                label { style: "color: #f0e6ff; font-family: Silkscreen; font-size: 0.85rem;", "Coin Reward" }
+                div {
+                    style: "display: flex; gap: 6px; max-width: 280px; margin: 0 auto;",
+                    for val in [1u32, 3, 5] {
+                        button {
+                            onclick: move |_| {
+                                app_state.with_mut(|s| s.update_habit_coin_reward(habit_id, val));
+                            },
+                            style: format!(
+                                "flex: 1; border-radius: 8px; padding: 2px 6px; font-family: Silkscreen; font-size: 0.95rem; cursor: pointer; border: 2px solid {}; background: #1a0a2e; color: {}; min-width: 90px;",
+                                if current_reward == val {
+                                    match val { 1 => "#4ade80", 3 => "#a855f7", 5 => "#f97316", _ => "#4ade80" }
+                                } else { "transparent" },
+                                match val { 1 => "#4ade80", 3 => "#a855f7", 5 => "#f97316", _ => "#4ade80" }
+                            ),
+                            { format!("{} coin{}", val, if val > 1 { "s" } else { "" }) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Binary calendar heatmap inner content: green for completed days, dark gray otherwise.
 /// Cyan border for today's cell.
 #[component]
-pub fn StreakCalendar(habit: habit_slot::models::Habit) -> Element {
+fn StreakCalendarInner(habit: habit_slot::models::Habit) -> Element {
     let app_state = use_context::<Signal<AppState>>();
     let mut selected_month = use_signal(|| None);
 
@@ -160,61 +200,57 @@ pub fn StreakCalendar(habit: habit_slot::models::Habit) -> Element {
 
     rsx! {
         div {
-            style: "background: #0f0520; border-radius: 8px; padding: 12px;",
+            style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px;",
+            button {
+                onclick: prev_month.clone(),
+                style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer; text-align: left;",
+                "Prev"
+            }
 
-            div {
-                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px;",
-                button {
-                    onclick: prev_month.clone(),
-                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer; text-align: left;",
-                    "Prev"
-                }
+            span {
+                style: "font-size: 0.95rem; color: #ff2d78; font-weight: bold; flex: 1; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;",
+                "{month_name_str} {current_year}"
+            }
 
-                span {
-                    style: "font-size: 0.95rem; color: #ff2d78; font-weight: bold; flex: 1; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;",
-                    "{month_name_str} {current_year}"
-                }
+            button {
+                onclick: next_month.clone(),
+                style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer; text-align: right;",
+                "Next"
+            }
+        }
 
-                button {
-                    onclick: next_month.clone(),
-                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer; text-align: right;",
-                    "Next"
+        div {
+            style: "display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;",
+
+            for day_name in ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] {
+                div {
+                    style: "text-align: center; font-size: 0.7rem; color: #b8a9d4; padding: 4px 0;",
+                    "{day_name}"
                 }
             }
 
-            div {
-                style: "display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;",
-
-                for day_name in ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] {
-                    div {
-                        style: "text-align: center; font-size: 0.7rem; color: #b8a9d4; padding: 4px 0;",
-                        "{day_name}"
-                    }
-                }
-
-                for _ in 0..weekday_offset {
-                    div {
-                        style: "aspect-ratio: 1; border-radius: 3px; background: transparent;",
-                    }
-                }
-
-                for (cell, day_num) in cells.iter().zip(1..=days_in_month) {
-                    div {
-                        style: format!(
-                            "aspect-ratio: 1; border-radius: 3px; background: {}; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #ccc; cursor: default; {}",
-                            cell.bg, cell.border
-                        ),
-                        "{day_num}"
-                    }
+            for _ in 0..weekday_offset {
+                div {
+                    style: "aspect-ratio: 1; border-radius: 3px; background: transparent;",
                 }
             }
 
-            div {
-                style: "display: flex; gap: 8px; margin-top: 8px; font-size: 0.7rem; color: #b8a9d4;",
-
-                ColorSwatch { color: "#4ade80", label: "Completed" }
-                ColorSwatch { color: "#1a1a2e", label: "Not done" }
+            for (cell, day_num) in cells.iter().zip(1..=days_in_month) {
+                div {
+                    style: format!(
+                        "aspect-ratio: 1; border-radius: 3px; background: {}; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #ccc; cursor: default; {}",
+                        cell.bg, cell.border
+                    ),
+                    "{day_num}"
+                }
             }
+        }
+
+        div {
+            style: "display: flex; gap: 8px; margin-top: 8px; font-size: 0.7rem; color: #b8a9d4;",
+
+            ColorSwatch { color: "#4ade80", label: "Completed" }
+            ColorSwatch { color: "#1a1a2e", label: "Not done" }
         }
     }
 }

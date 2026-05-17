@@ -33,6 +33,7 @@ pub struct Habit {
     pub reward_pool: RewardPool,
     pub target_days: u32,
     pub longest_streak: u32,
+    pub coin_reward: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -49,8 +49,8 @@ fn App() -> Element {
         style { "@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap'); {TAILWIND_CSS} @keyframes toast-slide-in {{ from {{ transform: translateY(-100%); opacity: 0; }} to {{ transform: translateY(0); opacity: 1; }}" }
 
         div {
-            style: "padding-top: env(safe-area-inset-top, 12px);",
-            class: "flex flex-col min-h-full-vh w-full overflow-x-hidden px-4 pt-3 font-pixel bg-gradient-to-b from-[#1a0a2e] to-[#2d1b69] text-[#f0e6ff] pb-16",
+            style: "height: 100vh; overflow: hidden; padding-top: env(safe-area-inset-top, 12px);",
+            class: "flex flex-col w-full overflow-x-hidden px-4 pt-3 font-pixel bg-gradient-to-b from-[#1a0a2e] to-[#2d1b69] text-[#f0e6ff] pb-16",
 
             ToastContainer {}
 
@@ -59,7 +59,8 @@ fn App() -> Element {
             }
 
             div {
-                class: "flex-1",
+                class: "flex-1 min-h-0",
+                style: "overflow-y: auto;",
                 match current_page {
                     Page::Home => rsx! { HomePage {} },
                     Page::SlotMachine => rsx! { SlotMachine {} },

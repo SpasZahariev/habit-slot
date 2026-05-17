@@ -17,6 +17,7 @@ pub use agis_animation::AgisAnimation;
 #[allow(unused_imports)]
 pub use calendar_heatmap::CalendarHeatmap;
 pub use coin_footer_bar::CoinFooterBar;
+#[allow(unused_imports)]
 pub use habit_detail_page::DeleteConfirmationModal;
 pub use habit_detail_page::HabitDetailPage;
 pub use habit_list::HabitList;

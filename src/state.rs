@@ -159,7 +159,7 @@ impl AppState {
 
 #[allow(dead_code)]
 impl AppState {
-    pub fn add_habit(&mut self, name: String, target_days: u32) {
+    pub fn add_habit(&mut self, name: String, target_days: u32, coin_reward: u32) {
         let habit = Habit {
             id: Uuid::new_v4(),
             name,
@@ -167,6 +167,7 @@ impl AppState {
             reward_pool: RewardPool::default(),
             target_days,
             longest_streak: 0,
+            coin_reward,
         };
         let id = habit.id;
         let _created_at = habit.created_at;
@@ -181,6 +182,7 @@ impl AppState {
                 &self.habits.last().unwrap().name,
                 created_at,
                 target_days,
+                coin_reward,
             );
         }
     }
@@ -193,6 +195,16 @@ impl AppState {
 
         self.habits.retain(|h| h.id != id);
         self.milestone_trackers.remove(&id);
+    }
+
+    pub fn update_habit_coin_reward(&mut self, id: Uuid, coin_reward: u32) {
+        if let Some(habit) = self.habits.iter_mut().find(|h| h.id == id) {
+            habit.coin_reward = coin_reward;
+        }
+        #[cfg(feature = "db")]
+        if let Some(db) = &self.db {
+            let _ = db.update_coin_reward(id, coin_reward);
+        }
     }
 
     /// Increment completion for a habit today. Always additive, no toggle/undo.
@@ -231,9 +243,15 @@ impl AppState {
             streak.current_streak_days.max(1)
         };
 
-        // Award flat 1 coin per tick
+        // Award coins based on habit's coin_reward setting
+        let habit_coin_reward = self
+            .habits
+            .iter()
+            .find(|h| h.id == habit_id)
+            .map(|h| h.coin_reward)
+            .unwrap_or(1);
         let _tx_count_before = self.coin_balance.transactions.len();
-        economy::on_habit_tick(&mut self.coin_balance);
+        economy::on_habit_tick(&mut self.coin_balance, habit_coin_reward);
         #[cfg(feature = "db")]
         self.persist_new_transactions(tx_count_before);
 

@@ -2,9 +2,9 @@ use uuid::Uuid;
 
 use crate::models::{CoinBalance, Transaction, TransactionKind};
 
-/// Award flat 1 coin for a habit tick. No streak bonus.
-pub fn on_habit_tick(coins: &mut CoinBalance) {
-    earn(coins, 1, "Habit tick".to_string());
+/// Award coins for a habit tick based on the habit's coin reward setting.
+pub fn on_habit_tick(coins: &mut CoinBalance, reward_amount: u32) {
+    earn(coins, reward_amount, "Habit tick".to_string());
 }
 
 /// Add coins to balance and record an immutable transaction.
@@ -97,13 +97,13 @@ mod tests {
     #[test]
     fn on_habit_tick_awards_one_coin() {
         let mut coins = fresh_coins();
-        on_habit_tick(&mut coins);
+        on_habit_tick(&mut coins, 1);
         assert_eq!(coins.balance, 1);
 
-        on_habit_tick(&mut coins);
+        on_habit_tick(&mut coins, 1);
         assert_eq!(coins.balance, 2);
 
-        on_habit_tick(&mut coins);
+        on_habit_tick(&mut coins, 1);
         assert_eq!(coins.balance, 3);
     }
 

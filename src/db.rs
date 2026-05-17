@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::models::{CoinBalance, Completion, GlobalReward, Habit, RewardPool};
 
 /// Current schema version. Increment on every migration.
-const SCHEMA_VERSION: i32 = 3;
+const SCHEMA_VERSION: i32 = 4;
 
 #[cfg(feature = "db")]
 pub struct Db {
@@ -104,6 +104,12 @@ impl Db {
                 )?;
             }
 
+            if current.unwrap_or(0) < 4 {
+                conn.execute_batch(
+                    "ALTER TABLE habits ADD COLUMN coin_reward INTEGER NOT NULL DEFAULT 1;",
+                )?;
+            }
+
             conn.execute(
                 "INSERT OR REPLACE INTO metadata (key, value) VALUES ('schema_version', ?1)",
                 [&SCHEMA_VERSION],
@@ -121,11 +127,12 @@ impl Db {
         name: &str,
         created_at: NaiveDate,
         target_days: u32,
+        coin_reward: u32,
     ) -> Result<(), rusqlite::Error> {
         let date_str = format_date(created_at);
         self.conn.execute(
-            "INSERT OR REPLACE INTO habits (id, name, created_at, target_days, longest_streak) VALUES (?1, ?2, ?3, ?4, 0)",
-            rusqlite::params![&id.to_string(), name, &date_str, target_days],
+            "INSERT OR REPLACE INTO habits (id, name, created_at, target_days, longest_streak, coin_reward) VALUES (?1, ?2, ?3, ?4, 0, ?5)",
+            rusqlite::params![&id.to_string(), name, &date_str, target_days, coin_reward],
         )?;
 
         self.conn.execute(
@@ -149,7 +156,7 @@ impl Db {
 
     pub fn load_habits(&self) -> Result<Vec<Habit>, rusqlite::Error> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, created_at, target_days, longest_streak FROM habits ORDER BY created_at",
+            "SELECT id, name, created_at, target_days, longest_streak, coin_reward FROM habits ORDER BY created_at",
         )?;
         let rows = stmt.query_map((), |row| {
             Ok(Habit {
@@ -160,6 +167,7 @@ impl Db {
                 reward_pool: RewardPool::default(),
                 target_days: row.get::<_, u32>(3).unwrap_or(0),
                 longest_streak: row.get::<_, u32>(4).unwrap_or(0),
+                coin_reward: row.get::<_, u32>(5).unwrap_or(1),
             })
         })?;
 
@@ -212,6 +220,18 @@ impl Db {
         self.conn.execute(
             "UPDATE habits SET longest_streak = ?1 WHERE id = ?2",
             rusqlite::params![streak, habit_id.to_string()],
+        )?;
+        Ok(())
+    }
+
+    pub fn update_coin_reward(
+        &self,
+        habit_id: Uuid,
+        coin_reward: u32,
+    ) -> Result<(), rusqlite::Error> {
+        self.conn.execute(
+            "UPDATE habits SET coin_reward = ?1 WHERE id = ?2",
+            rusqlite::params![coin_reward, habit_id.to_string()],
         )?;
         Ok(())
     }
@@ -465,7 +485,7 @@ mod tests {
         let name = "Test Habit".to_string();
         let created = date(2026, 5, 7);
 
-        db.insert_habit(id, &name, created, 0).unwrap();
+        db.insert_habit(id, &name, created, 0, 1).unwrap();
 
         let habits = db.load_habits().unwrap();
         assert_eq!(habits.len(), 1);
@@ -483,7 +503,7 @@ mod tests {
     fn completion_crud_roundtrip() {
         let db = Db::open_memory().unwrap();
         let habit_id = Uuid::new_v4();
-        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0, 1)
             .unwrap();
 
         let comp_date = date(2026, 5, 7);
@@ -554,7 +574,7 @@ mod tests {
         {
             let db1 = Db::open(path).unwrap();
             let id = Uuid::new_v4();
-            db1.insert_habit(id, "Persisted Habit", date(2026, 5, 7), 0)
+            db1.insert_habit(id, "Persisted Habit", date(2026, 5, 7), 0, 1)
                 .unwrap();
             db1.insert_completion(id, date(2026, 5, 7)).unwrap();
 
@@ -589,7 +609,7 @@ mod tests {
     fn milestone_tracker_crud() {
         let db = Db::open_memory().unwrap();
         let habit_id = Uuid::new_v4();
-        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0, 1)
             .unwrap();
 
         let tracker = db.load_milestone_tracker(habit_id).unwrap();
@@ -685,7 +705,7 @@ mod tests {
     fn increment_completion_first_insert() {
         let db = Db::open_memory().unwrap();
         let habit_id = Uuid::new_v4();
-        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0, 1)
             .unwrap();
 
         let comp_date = date(2026, 5, 7);
@@ -701,7 +721,7 @@ mod tests {
     fn increment_completion_subsequent_calls() {
         let db = Db::open_memory().unwrap();
         let habit_id = Uuid::new_v4();
-        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0, 1)
             .unwrap();
 
         let comp_date = date(2026, 5, 7);
@@ -718,7 +738,7 @@ mod tests {
     fn increment_completion_different_dates() {
         let db = Db::open_memory().unwrap();
         let habit_id = Uuid::new_v4();
-        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0)
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 0, 1)
             .unwrap();
 
         let d1 = date(2026, 5, 7);
@@ -736,7 +756,7 @@ mod tests {
     fn update_longest_streak_persists() {
         let db = Db::open_memory().unwrap();
         let habit_id = Uuid::new_v4();
-        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 30)
+        db.insert_habit(habit_id, "Test", date(2026, 5, 1), 30, 1)
             .unwrap();
 
         db.update_longest_streak(habit_id, 7).unwrap();
@@ -752,7 +772,7 @@ mod tests {
     fn habit_target_days_persists() {
         let db = Db::open_memory().unwrap();
         let id = Uuid::new_v4();
-        db.insert_habit(id, "Exercise", date(2026, 5, 1), 30)
+        db.insert_habit(id, "Exercise", date(2026, 5, 1), 30, 1)
             .unwrap();
 
         let habits = db.load_habits().unwrap();
