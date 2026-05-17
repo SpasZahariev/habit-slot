@@ -435,34 +435,78 @@ impl AppState {
         self.persist_new_transactions(self.coin_balance.transactions.len().saturating_sub(1));
     }
 
+    /// Check if any global reward has Low tier. Used to gate the lever.
+    pub fn has_any_low_tier_rewards(&self) -> bool {
+        self.global_rewards
+            .iter()
+            .any(|r| r.tier == GlobalRewardTier::Low)
+    }
+
+    /// Convert slot engine RewardTier to global reward tier.
+    fn slot_tier_to_global(tier: habit_slot::models::RewardTier) -> Option<GlobalRewardTier> {
+        match tier {
+            habit_slot::models::RewardTier::Small => Some(GlobalRewardTier::Low),
+            habit_slot::models::RewardTier::Medium => Some(GlobalRewardTier::Medium),
+            habit_slot::models::RewardTier::Jackpot => Some(GlobalRewardTier::Jackpot),
+            _ => None,
+        }
+    }
+
     /// Execute a slot spin with integrated pity tracking and economy.
-    /// Deducts bet, resolves spin, credits winnings. Returns the SpinResult.
-    /// Prepares animation strips for reel animation.
+    /// Deducts bet, resolves spin, selects global reward, credits ExtraRoll winnings.
+    /// Returns the SpinResult. Prepares animation strips for reel animation.
     pub fn execute_spin(&mut self, bet: u32) -> Option<SpinResult> {
-        let _tx_before = self.coin_balance.transactions.len();
         if !economy::spend(&mut self.coin_balance, bet, format!("Bet {} coins", bet)) {
             return None;
         }
 
         let mut losses = self.pity_counter.consecutive_losses;
-        let result = slot::spin_with_state(&mut losses, bet);
+        let mut result = slot::spin_with_state(&mut losses, bet);
         self.pity_counter.consecutive_losses = losses;
 
-        if result.payout_coins > 0 {
-            economy::earn(
-                &mut self.coin_balance,
-                result.payout_coins,
-                format!("Slot win: {:?}", result.symbols_matched.map(|(s, _)| s)),
-            );
+        if result.tier != habit_slot::models::RewardTier::None {
+            let has_medium = self
+                .global_rewards
+                .iter()
+                .any(|r| r.tier == GlobalRewardTier::Medium);
+            let has_high = self
+                .global_rewards
+                .iter()
+                .any(|r| r.tier == GlobalRewardTier::Jackpot);
+
+            let (reward_tier, payout_coins) =
+                slot::resolve_reward(result.tier, bet, has_medium, has_high);
+
+            result.payout_coins = payout_coins;
+            result.reward_tier_given = reward_tier;
+
+            if result.tier == habit_slot::models::RewardTier::ExtraRoll {
+                economy::earn(
+                    &mut self.coin_balance,
+                    payout_coins,
+                    format!("Slot win: ExtraRoll"),
+                );
+                result.reward_note = format!("+{} coins", payout_coins);
+            } else if let Some(given_tier) = reward_tier {
+                let global_tier =
+                    Self::slot_tier_to_global(given_tier).unwrap_or(GlobalRewardTier::Low);
+                if let Some(selected) =
+                    rewards::select_global_reward_by_tier(&self.global_rewards, global_tier)
+                {
+                    result.reward_note = selected.name;
+                } else {
+                    result.reward_note = format!("{} reward", given_tier);
+                }
+            }
         }
 
         #[cfg(feature = "db")]
         {
+            let tx_before = self.coin_balance.transactions.len();
             self.persist_new_transactions(tx_before);
             self.persist_pity_counter();
         }
 
-        // Prepare animation strips before revealing result
         self.prepare_animation(&result);
 
         self.last_spin_result = Some(result.clone());
@@ -481,17 +525,9 @@ impl AppState {
         if self.is_spinning {
             self.reels_stopped += 1;
             if self.reels_stopped >= 3 {
-                // Push toast after animation finishes (only for wins)
                 if let Some(ref result) = self.last_spin_result {
-                    if result.payout_coins > 0 {
-                        if let Some((symbol, count)) = result.symbols_matched {
-                            let symbol_name =
-                                habit_slot::sprites::symbol_display_name(&symbol).to_string();
-                            self.push_toast(
-                                format!("{} x{}", symbol_name, count),
-                                result.payout_coins,
-                            );
-                        }
+                    if !result.reward_note.is_empty() {
+                        self.push_toast(result.reward_note.clone(), result.payout_coins);
                     }
                 }
                 self.is_spinning = false;

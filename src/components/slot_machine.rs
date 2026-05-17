@@ -40,7 +40,8 @@ pub fn SlotMachine() -> Element {
     let is_spinning = app_state.read().is_spinning;
     let animation_strips = app_state.read().animation_strips.clone();
     let reels_stopped = app_state.read().reels_stopped;
-         let balance_u32 = app_state.read().coin_balance.balance as u32;
+    let balance_u32 = app_state.read().coin_balance.balance as u32;
+    let has_low_rewards = app_state.read().has_any_low_tier_rewards();
 
     if is_spinning && reels_stopped == 0 {
         let mut state_clone = use_context::<Signal<AppState>>().clone();
@@ -123,11 +124,20 @@ pub fn SlotMachine() -> Element {
             }}
         " }
 
-        div {
-             p {
-                 style: "color: rgba(240,230,255,0.3); font-family: Silkscreen; font-size: 0.85rem; text-align: center; margin-bottom: 15px",
-                 "Spend more coins to qualify for Higher Tier rewards."
-             }
+       if !has_low_rewards {
+            div {
+                p {
+                    style: "color: #ff2d78; font-family: Silkscreen; font-size: 0.85rem; text-align: center; margin-bottom: 15px",
+                    "Add Low-tier rewards on the Rewards page to start spinning."
+                }
+            }
+        } else {
+            div {
+                p {
+                    style: "color: rgba(240,230,255,0.3); font-family: Silkscreen; font-size: 0.85rem; text-align: center; margin-bottom: 15px",
+                    "Spend more coins to qualify for Higher Tier rewards."
+                }
+            }
         }
 
        div {
@@ -171,7 +181,7 @@ pub fn SlotMachine() -> Element {
                 div {
                     class: "flex justify-center mt-4",
                     LeverSlider {
-                        is_disabled: is_spinning || balance_u32 < spin_bet(),
+                        is_disabled: is_spinning || balance_u32 < spin_bet() || !app_state.read().has_any_low_tier_rewards(),
                         on_trigger: Callback::new(move |_| {
                             let bet = spin_bet();
                             app_state.with_mut(|state| {
@@ -445,12 +455,11 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
 #[component]
 fn SpinResultDisplay(spin_result: Option<SpinResult>) -> Element {
     let display = match &spin_result {
-        Some(r) if r.payout_coins > 0 => {
-            let win_text = format!("Win! +{} coins", r.payout_coins);
-          rsx! {
+        Some(r) if !r.reward_note.is_empty() => {
+            rsx! {
                 p {
                     class: "text-[#00f5d4] text-xl font-bold",
-                    "{win_text}"
+                    "{r.reward_note}"
                 }
             }
         }
