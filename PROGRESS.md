@@ -243,3 +243,11 @@
 - Updated empty state message with call-to-action text
 - Color-coded tier badges in rewards list match modal colors (green/purple/orange borders)
 - All 73 tests pass (`cargo test --features db`)
+
+## Issue #34: Delete rewards ✓ DONE
+
+- `DeleteRewardButton` component in `rewards_page.rs`: "×" icon button per reward item
+- Clicking delete calls `AppState.remove_global_reward()` which persists to SQLite via `db.delete_global_reward()`
+- UI updates immediately — deleted item disappears from list on click
+- Styled with transparent background, subtle lavender color matching vaporwave theme
+- All 73 tests pass (`cargo test --features db`)
