@@ -5,14 +5,14 @@ use habit_slot::sprites::back_arrow_uri;
 #[component]
 pub fn NavBar() -> Element {
     let mut app_state = use_context::<Signal<AppState>>();
-    let current_page = app_state.read().current_page;
+    let current_page = app_state.read().current_page.clone();
 
-    let title = match &current_page {
-        Page::Home => "Habit Slot",
-        Page::SlotMachine => "Slot Machine",
-        Page::Habits => "Habits",
+    let title: String = match &current_page {
+        Page::Home => "Habit Slot".to_string(),
+        Page::SlotMachine => "Slot Machine".to_string(),
+        Page::Habits => "Habits".to_string(),
         Page::HabitDetail(id_str) => app_state.read().get_habit_name(id_str),
-        Page::Rewards => "Rewards",
+        Page::Rewards => "Rewards".to_string(),
     };
 
     let back_action = move |_| {

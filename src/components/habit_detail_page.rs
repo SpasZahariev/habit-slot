@@ -203,13 +203,13 @@ pub fn StreakCalendar(habit: habit_slot::models::Habit) -> Element {
                     }
                 }
 
-                for (i, cell) in cells.iter().enumerate() {
+                for (cell, day_num) in cells.iter().zip(1..=days_in_month) {
                     div {
                         style: format!(
                             "aspect-ratio: 1; border-radius: 3px; background: {}; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #ccc; cursor: default; {}",
                             cell.bg, cell.border
                         ),
-                        "{}", i as u32 + 1
+                        "{day_num}"
                     }
                 }
             }

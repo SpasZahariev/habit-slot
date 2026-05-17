@@ -2,7 +2,7 @@ mod components;
 mod state;
 
 use crate::components::{
-    CoinFooterBar, DeleteConfirmationModal, HabitDetailPage, HabitList, HabitModal, HomePage, NavBar, RewardsPage, SlotMachine, ToastContainer,
+    CoinFooterBar, HabitDetailPage, HabitList, HabitModal, HomePage, NavBar, RewardsPage, SlotMachine, ToastContainer,
 };
 use crate::state::{use_app_state, Page};
 use dioxus::prelude::*;
@@ -42,7 +42,7 @@ fn App() -> Element {
 
     use_effect(|| set_android_flags());
 
-    let current_page = app_state.read().current_page;
+    let current_page = app_state.read().current_page.clone();
 
     rsx! {
         Meta { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" }

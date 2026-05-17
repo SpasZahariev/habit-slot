@@ -1,4 +1,5 @@
 mod agis_animation;
+#[allow(dead_code)]
 mod calendar_heatmap;
 mod coin_footer_bar;
 mod habit_detail_page;
@@ -13,6 +14,7 @@ mod rewards_page;
 mod toast_container;
 
 pub use agis_animation::AgisAnimation;
+#[allow(unused_imports)]
 pub use calendar_heatmap::CalendarHeatmap;
 pub use coin_footer_bar::CoinFooterBar;
 pub use habit_detail_page::DeleteConfirmationModal;
