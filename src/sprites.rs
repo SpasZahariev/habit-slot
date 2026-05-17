@@ -152,6 +152,24 @@ pub fn back_arrow_uri() -> &'static str {
     BACK_ARROW_URI
 }
 
+const CHECK_GRAY_URI: &str = concat!(
+    "data:image/png;base64,",
+    include_str!("check_gray_base64.txt")
+);
+
+pub fn check_gray_uri() -> &'static str {
+    CHECK_GRAY_URI
+}
+
+const CHECK_GREEN_URI: &str = concat!(
+    "data:image/png;base64,",
+    include_str!("check_green_base64.txt")
+);
+
+pub fn check_green_uri() -> &'static str {
+    CHECK_GREEN_URI
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

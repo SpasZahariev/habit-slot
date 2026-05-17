@@ -1,6 +1,7 @@
 use crate::state::AppState;
 use dioxus::prelude::*;
 use habit_slot::models::Habit;
+use habit_slot::sprites::{check_gray_uri, check_green_uri};
 use std::time::Duration;
 
 #[component]
@@ -25,9 +26,9 @@ pub fn HabitList() -> Element {
             }
         } else {
             ul {
-                class: "habit-list list-none w-[96%] gap-2 flex flex-col",
+                class: "habit-list list-none w-[96%] gap-3 flex flex-col",
                 for habit in habits {
-                    HabitItem { habit }
+                    HabitRow { habit }
                 }
             }
         }
@@ -35,48 +36,59 @@ pub fn HabitList() -> Element {
 }
 
 #[component]
-pub fn HabitItem(habit: Habit) -> Element {
+pub fn HabitRow(habit: Habit) -> Element {
     let mut app_state = use_context::<Signal<AppState>>();
     let mut pulsing = use_signal(|| false);
 
     let habit_id = habit.id;
+    let today_count = app_state.read().get_today_count(habit_id);
+    let completed = today_count > 0;
+    let check_image = if completed {
+        check_green_uri()
+    } else {
+        check_gray_uri()
+    };
 
     rsx! {
-        li {
-            class: "habit-item flex items-center justify-between p-4 mb-2 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)]",
+        div {
+            class: "habit-row flex items-center gap-3",
 
             div {
-                class: "flex items-center gap-2 font-pixel flex-1 min-w-0",
+                class: "habit-card flex-1 min-w-0 p-4 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)]",
 
-                span {
-                    style: "color: #00f5d4; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;",
-                    "{&habit.name}"
-                }
+                div {
+                    class: "flex items-center gap-2 font-pixel flex-1 min-w-0",
 
-                span {
-                    style: "color: rgba(240,230,255,0.3); font-size: 0.85rem;",
-                    "|"
-                }
+                    span {
+                        style: "color: #00f5d4; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;",
+                        "{&habit.name}"
+                    }
 
-                span {
-                    style: "color: #ff2d78; font-size: 0.85rem;",
-                    "🔥 {app_state.read().get_streak(habit_id).current_streak_days}"
-                }
+                    span {
+                        style: "color: rgba(240,230,255,0.3); font-size: 0.85rem;",
+                        "|"
+                    }
 
-                span {
-                    style: "color: rgba(240,230,255,0.4); font-size: 0.85rem;",
-                    "|"
-                }
+                    span {
+                        style: "color: #ff2d78; font-size: 0.85rem;",
+                        "🔥 {app_state.read().get_streak(habit_id).current_streak_days}"
+                    }
 
-                span {
-                    style: "color: rgba(240,230,255,0.6); font-size: 0.85rem;",
-                    "today: {app_state.read().get_today_count(habit_id)}"
+                    span {
+                        style: "color: rgba(240,230,255,0.4); font-size: 0.85rem;",
+                        "|"
+                    }
+
+                    span {
+                        style: "color: rgba(240,230,255,0.6); font-size: 0.85rem;",
+                        "today: {today_count}"
+                    }
                 }
             }
 
             button {
                 class: format!("tick-btn {}" , if *pulsing.read() { "tick-pulse" } else { "" }),
-                style: "width: 36px; height: 36px; border-radius: 50%; background: #4ade80; border: none; color: white; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;",
+                style: "width: 40px; height: 40px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0;",
                 onclick: move |_| {
                     app_state.with_mut(|s| {
                         s.increment_habit_completion(habit_id);
@@ -89,7 +101,10 @@ pub fn HabitItem(habit: Habit) -> Element {
                     });
                 },
 
-                span { "✓" }
+                img {
+                    src: check_image,
+                    style: "width: 28px; height: 28px; image-rendering: pixelated;",
+                }
             }
         }
     }
