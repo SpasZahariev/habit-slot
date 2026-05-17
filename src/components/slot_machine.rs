@@ -131,13 +131,6 @@ pub fn SlotMachine() -> Element {
                     "Add Low-tier rewards on the Rewards page to start spinning."
                 }
             }
-        } else {
-            div {
-                p {
-                    style: "color: rgba(240,230,255,0.3); font-family: Silkscreen; font-size: 0.85rem; text-align: center; margin-bottom: 15px",
-                    "Spend more coins to qualify for Higher Tier rewards."
-                }
-            }
         }
 
        div {

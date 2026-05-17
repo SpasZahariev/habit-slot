@@ -36,6 +36,7 @@ pub fn ToastContainer() -> Element {
 
 #[component]
 fn ToastBanner(toast: ToastMessage) -> Element {
+    let show_coins = toast.payout > 0;
     rsx! {
         div {
             class: "toast-banner mt-2 px-6 py-3 bg-[#0f0520] border border-[#ff2d78] rounded-xl shadow-[0_0_20px_rgba(255,45,120,0.4)] flex items-center gap-3 pointer-events-auto",
@@ -44,9 +45,11 @@ fn ToastBanner(toast: ToastMessage) -> Element {
                 class: "text-[#00f5d4] text-lg font-bold",
                 "{toast.symbol_name}"
             }
-            span {
-                class: "text-[#ff2d78] text-base font-bold",
-                "+{toast.payout} coins"
+            if show_coins {
+                span {
+                    class: "text-[#ff2d78] text-base font-bold",
+                    "+{toast.payout} coins"
+                }
             }
         }
     }
