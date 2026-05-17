@@ -216,10 +216,7 @@ fn ReelColumnAnimated(
     is_stopped: bool,
     spin_result: Option<SpinResult>,
 ) -> Element {
-    let is_grayed = spin_result
-        .as_ref()
-        .map(|r| r.grayed_high_tier)
-        .unwrap_or(false);
+    let is_grayed: bool = false;
 
     // Find ALL winning rows, each with their own tier color
     let all_winning_rows: Vec<(usize, SlotSymbol)> = spin_result.as_ref().map(|r| {
@@ -362,10 +359,7 @@ struct ReelCellData {
 
 #[component]
 fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinResult>) -> Element {
-    let is_grayed = spin_result
-        .as_ref()
-        .map(|r| r.grayed_high_tier)
-        .unwrap_or(false);
+    let is_grayed: bool = false;
 
     // Find ALL winning rows, each with their own tier color
     let all_winning_rows: Vec<(usize, SlotSymbol)> = spin_result.as_ref().map(|r| {
@@ -453,17 +447,10 @@ fn SpinResultDisplay(spin_result: Option<SpinResult>) -> Element {
     let display = match &spin_result {
         Some(r) if r.payout_coins > 0 => {
             let win_text = format!("Win! +{} coins", r.payout_coins);
-            let grayed_note = r.grayed_high_tier;
-            rsx! {
+          rsx! {
                 p {
                     class: "text-[#00f5d4] text-xl font-bold",
                     "{win_text}"
-                }
-                if grayed_note {
-                    p {
-                        class: "text-gray-500 text-sm mt-1",
-                        "(Bet more for full payout)"
-                    }
                 }
             }
         }

@@ -60,7 +60,6 @@ pub struct SpinResult {
     pub tier: RewardTier,
     pub payout_coins: u32,
     pub is_near_miss: bool,
-    pub grayed_high_tier: bool,
     /// Which reward tier was actually given to the user from global rewards.
     pub reward_tier_given: Option<RewardTier>,
     /// Human-readable note describing the reward (e.g. "Claimed: Coffee Break").
@@ -291,7 +290,6 @@ mod toast_tests {
             tier: RewardTier::None,
             payout_coins: 0,
             is_near_miss: false,
-            grayed_high_tier: false,
             reward_tier_given: None,
             reward_note: String::new(),
         };
@@ -305,9 +303,8 @@ mod toast_tests {
             reels: Default::default(),
             symbols_matched: None,
             tier: RewardTier::Small,
-            payout_coins: 4,
+            payout_coins: 0,
             is_near_miss: false,
-            grayed_high_tier: false,
             reward_tier_given: Some(RewardTier::Small),
             reward_note: "Claimed: Coffee Break".to_string(),
         };

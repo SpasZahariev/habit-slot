@@ -20,62 +20,49 @@ const EXTRA_ROLL_COINS_URI: &str = concat!(
 
 /// Single source of truth for all slot symbol properties.
 /// To add a new symbol: add an entry to this array and update the SlotSymbol enum.
+/// Weights: Heart 17/14/11 (42, ~38.9%), Skull 10/6 (16, ~14.8%), Chest 7 (~6.5%), ExtraRoll 14 (~13.0%)
 pub static SYMBOLS: [SpriteConfig; 7] = [
     SpriteConfig {
         display_name: "Heart",
         tier: RewardTier::Small,
-        weight: 25.0,
-        payout_multiplier: 2,
+        weight: 17.0,
         sprite_uri: LOW_HEART_URI,
-        gray_at_low_bet: false,
     },
     SpriteConfig {
         display_name: "Heart",
         tier: RewardTier::Small,
-        weight: 20.0,
-        payout_multiplier: 4,
+        weight: 14.0,
         sprite_uri: LOW_HEART_URI,
-        gray_at_low_bet: false,
     },
     SpriteConfig {
         display_name: "Heart",
         tier: RewardTier::Small,
-        weight: 15.0,
-        payout_multiplier: 3,
+        weight: 11.0,
         sprite_uri: LOW_HEART_URI,
-        gray_at_low_bet: false,
     },
     SpriteConfig {
         display_name: "Skull",
         tier: RewardTier::Medium,
-        weight: 18.0,
-        payout_multiplier: 8,
+        weight: 10.0,
         sprite_uri: MED_SKULL_URI,
-        gray_at_low_bet: true,
     },
     SpriteConfig {
         display_name: "Skull",
         tier: RewardTier::Medium,
-        weight: 12.0,
-        payout_multiplier: 12,
+        weight: 6.0,
         sprite_uri: MED_SKULL_URI,
-        gray_at_low_bet: true,
     },
     SpriteConfig {
         display_name: "Chest",
         tier: RewardTier::Jackpot,
-        weight: 10.0,
-        payout_multiplier: 50,
+        weight: 7.0,
         sprite_uri: HIGH_CHEST_URI,
-        gray_at_low_bet: true,
     },
     SpriteConfig {
         display_name: "ExtraRoll",
         tier: RewardTier::ExtraRoll,
-        weight: 8.0,
-        payout_multiplier: 0,
+        weight: 14.0,
         sprite_uri: EXTRA_ROLL_COINS_URI,
-        gray_at_low_bet: false,
     },
 ];
 
@@ -85,10 +72,7 @@ pub struct SpriteConfig {
     pub display_name: &'static str,
     pub tier: RewardTier,
     pub weight: f64,
-    pub payout_multiplier: u32,
     pub sprite_uri: &'static str,
-    /// Gray out this symbol when matched at less than max bet.
-    pub gray_at_low_bet: bool,
 }
 
 impl SlotSymbol {
