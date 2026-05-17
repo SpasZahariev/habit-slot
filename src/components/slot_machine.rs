@@ -2,7 +2,7 @@ use super::LeverSlider;
 use crate::state::AppState;
 use dioxus::prelude::*;
 use habit_slot::models::{SlotSymbol, SpinResult};
-use habit_slot::sprites::symbol_sprite_uri;
+use habit_slot::sprites::{display_names_match, symbol_sprite_uri, winning_border_color};
 
 /// Cell dimensions for 49x49 PNG icons with padding. Square cells.
 const CELL_W: u32 = 86;
@@ -184,26 +184,26 @@ fn ReelColumnAnimated(
         .map(|r| r.grayed_high_tier)
         .unwrap_or(false);
 
-    let winning_row = spin_result.as_ref().and_then(|r| {
-        if let Some((matched_symbol, _)) = r.symbols_matched {
-            let reels = r.reels;
-            for row in 0..3 {
-                if reels[0][row] == matched_symbol
-                    && reels[1][row] == matched_symbol
-                    && reels[2][row] == matched_symbol
-                {
-                    return Some(row);
-                }
+    // Find ALL winning rows, each with their own tier color
+    let all_winning_rows: Vec<(usize, SlotSymbol)> = spin_result.as_ref().map(|r| {
+        let reels = r.reels;
+        let mut wins = Vec::new();
+        for row in 0..3 {
+            let a = reels[0][row];
+            let b = reels[1][row];
+            let c = reels[2][row];
+            if display_names_match(a, b, c) {
+                wins.push((row, a));
             }
         }
-        None
-    });
+        wins
+    }).unwrap_or_default();
 
     let result_symbols = strip.iter().skip(strip.len().saturating_sub(3)).cloned().collect::<Vec<_>>();
 
     let anim_strip: Vec<SlotSymbol> = [result_symbols.clone(), strip].concat();
 
-    let winning_global_row = winning_row.map(|r| r);
+    let strip_len = anim_strip.len();
 
     let anim_class = if is_stopped {
         "reel-strip-static"
@@ -224,6 +224,18 @@ fn ReelColumnAnimated(
         CELL_GAP, STRIP_PADDING, STRIP_PADDING
     );
 
+    let result_start = strip_len.saturating_sub(3);
+    let cell_colors: Vec<Option<&'static str>> = anim_strip.iter().enumerate().map(|(idx, symbol)| {
+        if idx >= result_start {
+            let row = idx - result_start;
+            all_winning_rows.iter()
+                .find(|(r, _)| *r == row)
+                .map(|(_, sym)| winning_border_color(*sym))
+        } else {
+            None
+        }
+    }).collect();
+
     rsx! {
         div {
             style: viewport_style,
@@ -233,7 +245,7 @@ fn ReelColumnAnimated(
                 for (idx, symbol) in anim_strip.iter().enumerate() {
                     ReelSymbolCell {
                         symbol: *symbol,
-                        is_winning: winning_global_row == Some(idx),
+                        winning_color: cell_colors[idx],
                         is_grayed,
                     }
                 }
@@ -243,29 +255,37 @@ fn ReelColumnAnimated(
 }
 
 #[component]
-fn ReelSymbolCell(symbol: SlotSymbol, is_winning: bool, is_grayed: bool) -> Element {
+fn ReelSymbolCell(symbol: SlotSymbol, winning_color: Option<&'static str>, is_grayed: bool) -> Element {
     let cell_style = format!(
         "flex-shrink:0;width:{}px;height:{}px;display:flex;align-items:center;justify-content:center;background-color:#2a1a4e;border-radius:6px",
         CELL_W, CELL_H
     );
 
-    let filter_style = if is_grayed && is_winning {
+    let is_winning = winning_color.is_some();
+
+    let wrapper_style = if is_winning {
+        let color = winning_color.unwrap();
+        format!("box-shadow:0 0 0 3px {color};box-shadow:0 0 8px {color}")
+    } else {
+        String::new()
+    };
+
+    let img_filter = if is_grayed && is_winning {
         "filter:grayscale(1) brightness(0.5);opacity:0.5"
-    } else if is_winning {
-        "box-shadow:0 0 0 2px #00f5d4"
     } else {
         ""
     };
 
     let img_style = format!(
-        "width:{}px;height:{}px;object-fit:contain",
+        "width:{}px;height:{}px;object-fit:contain;{}",
         (CELL_W as f32 * 0.57).round() as u32,
-        (CELL_W as f32 * 0.57).round() as u32
+        (CELL_W as f32 * 0.57).round() as u32,
+        img_filter
     );
 
     rsx! {
         div {
-            style: format!("{};{}", cell_style, filter_style),
+            style: format!("{};{}", cell_style, wrapper_style),
             img {
                 src: symbol_sprite_uri(&symbol),
                 style: img_style,
@@ -299,7 +319,8 @@ fn Reels(spin_result: Option<SpinResult>) -> Element {
 
 struct ReelCellData {
     uri: &'static str,
-    filter_css: String,
+    border_css: String,
+    img_filter_css: String,
 }
 
 #[component]
@@ -309,19 +330,20 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         .map(|r| r.grayed_high_tier)
         .unwrap_or(false);
 
-    let winning_row = spin_result.as_ref().and_then(|r| {
-        if let Some((matched_symbol, _)) = r.symbols_matched {
-            for row in 0..3 {
-                if reels[0][row] == matched_symbol
-                    && reels[1][row] == matched_symbol
-                    && reels[2][row] == matched_symbol
-                {
-                    return Some(row);
-                }
+    // Find ALL winning rows, each with their own tier color
+    let all_winning_rows: Vec<(usize, SlotSymbol)> = spin_result.as_ref().map(|r| {
+        let reels = r.reels;
+        let mut wins = Vec::new();
+        for row in 0..3 {
+            let a = reels[0][row];
+            let b = reels[1][row];
+            let c = reels[2][row];
+            if display_names_match(a, b, c) {
+                wins.push((row, a));
             }
         }
-        None
-    });
+        wins
+    }).unwrap_or_default();
 
     let viewport_style = format!(
         "position:relative;overflow:hidden;width:{}px;height:{}px;flex-shrink:0",
@@ -332,19 +354,30 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         CELL_GAP, STRIP_PADDING, STRIP_PADDING
     );
 
-    let cells: Vec<ReelCellData> = (0..3)
+  let cells: Vec<ReelCellData> = (0..3)
         .map(|row| {
-            let is_winning_cell = winning_row == Some(row);
-            let filter_css = if is_grayed && is_winning_cell {
-                "filter:grayscale(1) brightness(0.5);opacity:0.5".to_string()
-            } else if is_winning_cell {
-                "box-shadow:0 0 0 2px #00f5d4".to_string()
+            let winning_color = all_winning_rows.iter()
+                .find(|(r, _)| *r == row)
+                .map(|(_, sym)| winning_border_color(*sym));
+            let is_winning_cell = winning_color.is_some();
+
+            let border_css = if is_winning_cell {
+                let color = winning_color.unwrap();
+                format!("box-shadow:0 0 0 3px {color};box-shadow:0 0 8px {color}")
             } else {
                 String::new()
             };
+
+            let img_filter_css = if is_grayed && is_winning_cell {
+                "filter:grayscale(1) brightness(0.5);opacity:0.5".to_string()
+            } else {
+                String::new()
+            };
+
             ReelCellData {
                 uri: symbol_sprite_uri(&reels[col][row]),
-                filter_css,
+                border_css,
+                img_filter_css,
             }
         })
         .collect();
@@ -359,17 +392,17 @@ fn ReelColumn(col: usize, reels: [[SlotSymbol; 3]; 3], spin_result: Option<SpinR
         (CELL_W as f32 * 0.57).round() as u32
     );
 
-      rsx! {
+              rsx! {
         div {
             style: viewport_style,
             div {
                 style: strip_layout,
                 for cell in cells {
                     div {
-                        style: format!("{};{}", cell_base_style, cell.filter_css),
+                        style: format!("{};{}", cell_base_style, cell.border_css),
                         img {
                             src: cell.uri,
-                            style: img_style.clone(),
+                            style: format!("{};{}", img_style.clone(), cell.img_filter_css),
                         }
                     }
                 }

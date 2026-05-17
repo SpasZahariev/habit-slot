@@ -117,6 +117,23 @@ pub fn symbol_display_name(symbol: &SlotSymbol) -> &'static str {
     symbol.config().display_name
 }
 
+/// Check if three symbols share the same display name (i.e., form a 3-of-a-kind).
+pub fn display_names_match(a: SlotSymbol, b: SlotSymbol, c: SlotSymbol) -> bool {
+    let n = |s: SlotSymbol| symbol_display_name(&s);
+    n(a) == n(b) && n(b) == n(c)
+}
+
+/// Return the border color hex for a winning row based on the matched symbol's tier.
+pub fn winning_border_color(symbol: SlotSymbol) -> &'static str {
+    match symbol.config().tier {
+        RewardTier::Small => "#4ade80",
+        RewardTier::Medium => "#c084fc",
+        RewardTier::Jackpot => "#fb923c",
+        RewardTier::ExtraRoll => "#facc15",
+        RewardTier::None => "#00f5d4",
+    }
+}
+
 const GOLD_COINS_URI: &str = concat!(
     "data:image/png;base64,",
     include_str!("gold_coins_base64.txt")
