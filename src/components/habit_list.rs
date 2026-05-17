@@ -14,7 +14,7 @@ pub fn HabitList() -> Element {
             onclick: move |_| {
                 app_state.write().habit_modal_open = true;
             },
-            class: "w-[96%] mt-2 mb-3 rounded-lg font-pixel",
+            class: "w-full max-w-[420px] mx-auto mt-2 mb-3 rounded-lg font-pixel",
             style: "padding: 12px 16px; font-size: 0.95rem; background: transparent; border: 2px solid rgba(255,45,120,0.4); color: #f0e6ff; cursor: pointer;",
             "Add Habit"
         }
@@ -26,7 +26,7 @@ pub fn HabitList() -> Element {
             }
         } else {
             ul {
-                class: "habit-list list-none w-[96%] gap-3 flex flex-col",
+                class: "habit-list list-none w-full max-w-[420px] mx-auto gap-3 flex flex-col",
                 for habit in habits {
                     HabitRow { habit }
                 }

@@ -21,22 +21,17 @@ pub fn HabitDetailPage(habit_id: String) -> Element {
 
         rsx! {
             div {
-                class: "habit-detail-page w-[96%]",
+                class: "habit-detail-page w-full max-w-[420px] mx-auto",
 
                 div {
                     style: "background: #2a1a4e; border-radius: 12px; padding: 20px; margin-bottom: 12px; border: 1px solid rgba(255,45,120,0.2);",
-
-                    h2 {
-                        style: "color: #00f5d4; font-size: 1.3rem; margin: 0 0 16px 0; word-break: break-word;",
-                        "{&habit.name}"
-                    }
 
                     div {
                         style: "display: grid; grid-template-columns: 1fr 1fr; gap: 12px;",
 
                         StatBox { label: "Current Streak", value: format!("🔥 {} days", streak.current_streak_days) }
                         StatBox { label: "Longest Streak", value: format!("🏆 {} days", habit.longest_streak) }
-                        StatBox { label: "Days Done", value: format!("{} days", total_days_done) }
+                        StatBox { label: "Total Days", value: format!("{} days", total_days_done) }
                         StatBox { label: "Total Ticks", value: format!("{}", total_completions) }
                     }
                 }
@@ -168,22 +163,22 @@ pub fn StreakCalendar(habit: habit_slot::models::Habit) -> Element {
             style: "background: #0f0520; border-radius: 8px; padding: 12px;",
 
             div {
-                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;",
+                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px;",
                 button {
                     onclick: prev_month.clone(),
-                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer;",
-                    "← Prev"
+                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer; text-align: left;",
+                    "Prev"
                 }
 
                 span {
-                    style: "font-size: 0.95rem; color: #ff2d78; font-weight: bold;",
+                    style: "font-size: 0.95rem; color: #ff2d78; font-weight: bold; flex: 1; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;",
                     "{month_name_str} {current_year}"
                 }
 
                 button {
                     onclick: next_month.clone(),
-                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer;",
-                    "Next →"
+                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer; text-align: right;",
+                    "Next"
                 }
             }
 

@@ -87,22 +87,22 @@ pub fn CalendarHeatmap(habit: Habit) -> Element {
             style: "margin-top: 12px; background: #0f0520; border-radius: 8px; padding: 12px;",
 
             div {
-                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;",
+                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px;",
                 button {
                     onclick: prev_month.clone(),
-                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer;",
-                    "← Prev"
+                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer; text-align: left;",
+                    "Prev"
                 }
 
                 span {
-                    style: "font-size: 0.95rem; color: #ff2d78; font-weight: bold;",
+                    style: "font-size: 0.95rem; color: #ff2d78; font-weight: bold; flex: 1; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;",
                     "{month_name} {current_year}"
                 }
 
                 button {
                     onclick: next_month.clone(),
-                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer;",
-                    "Next →"
+                    style: "background: none; border: 1px solid #ff2d78; color: #ff2d78; padding: 4px 12px; border-radius: 4px; cursor: pointer; text-align: right;",
+                    "Next"
                 }
             }
 
