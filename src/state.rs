@@ -7,8 +7,8 @@ use uuid::Uuid;
 
 use habit_slot::economy;
 use habit_slot::models::{
-    CoinBalance, Completion, GlobalReward, Habit, PityCounter, RewardPool, SlotSymbol, SpinResult,
-    StreakData, ToastMessage,
+    CoinBalance, Completion, GlobalReward, GlobalRewardTier, Habit, PityCounter, RewardPool,
+    SlotSymbol, SpinResult, StreakData, ToastMessage,
 };
 use habit_slot::rewards::{self, MilestoneTracker};
 use habit_slot::slot;
@@ -42,6 +42,8 @@ pub struct AppState {
     pub toasts: Vec<ToastMessage>,
     /// Global rewards available on the Rewards page.
     pub global_rewards: Vec<GlobalReward>,
+    /// Is the add-reward modal open?
+    pub global_rewards_modal_open: bool,
     /// Reels are currently animating.
     pub is_spinning: bool,
     /// Animation strips for each reel column during spin. Each strip contains filler + result symbols.
@@ -67,6 +69,7 @@ impl Default for AppState {
             animation_strips: None,
             reels_stopped: 0,
             global_rewards: vec![],
+            global_rewards_modal_open: false,
             #[cfg(feature = "db")]
             db: None,
         }
@@ -104,6 +107,7 @@ impl AppState {
             animation_strips: None,
             reels_stopped: 0,
             global_rewards: db.load_global_rewards().ok().unwrap_or_default(),
+            global_rewards_modal_open: false,
             db: None,
         })
     }
@@ -392,6 +396,33 @@ impl AppState {
         self.is_spinning = false;
         self.animation_strips = None;
         self.reels_stopped = 0;
+    }
+
+    /// Add a global reward and persist to DB.
+    pub fn add_global_reward(&mut self, name: String, tier: GlobalRewardTier) {
+        let reward = GlobalReward {
+            id: Uuid::new_v4(),
+            name,
+            tier,
+        };
+        let id = reward.id;
+
+        #[cfg(feature = "db")]
+        if let Some(db) = &self.db {
+            let _ = db.insert_global_reward(id, &reward.name, &reward.tier);
+        }
+
+        self.global_rewards.push(reward);
+    }
+
+    /// Remove a global reward and persist to DB.
+    pub fn remove_global_reward(&mut self, id: Uuid) {
+        #[cfg(feature = "db")]
+        if let Some(db) = &self.db {
+            let _ = db.delete_global_reward(id);
+        }
+
+        self.global_rewards.retain(|r| r.id != id);
     }
 }
 

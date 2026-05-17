@@ -1,43 +1,58 @@
-use crate::state::AppState;
 use dioxus::prelude::*;
+
+use crate::components::RewardModal;
+use crate::models::GlobalRewardTier;
+use crate::state::AppState;
 
 #[component]
 pub fn RewardsPage() -> Element {
     let app_state = use_context::<Signal<AppState>>();
     let rewards = app_state.read().global_rewards.clone();
 
-    if rewards.is_empty() {
-        return rsx! {
+    let mut sorted: Vec<_> = rewards;
+    sorted.sort_by(|a, b| b.id.cmp(&a.id));
+
+    rsx! {
+        RewardModal {}
+
+        div {
+            style: "display: flex; justify-content: flex-end; margin-bottom: 12px;",
+            button {
+                onclick: move |_| app_state.write().global_rewards_modal_open = true,
+                style: "background: linear-gradient(135deg, #ff2d78, #c9464f); color: #f0e6ff; border: none; border-radius: 8px; padding: 8px 16px; font-family: 'Pixelify Sans', monospace; font-size: 0.9rem; cursor: pointer;",
+                "Add Reward"
+            }
+        }
+
+        if sorted.is_empty() {
             div {
                 class: "flex flex-col items-center flex-1 justify-center py-8 text-center opacity-70",
                 p { "No rewards yet." }
-                p { "Rewards earned from the slot machine will appear here." }
+                p { "Tap \"Add Reward\" to create your first reward goal." }
             }
-        };
-    }
-
-    rsx! {
-        ul {
-            class: "list-none w-full gap-2 flex flex-col",
-            for reward in rewards {
-                li {
-                    class: "p-4 mb-2 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)]",
-                    div {
-                        class: "flex justify-between items-center",
-                        strong {
-                            class: "text-[1.1rem] text-[#00f5d4]",
-                            "{&reward.name}"
-                        }
-                        span {
-                            class: format!("text-sm px-2 py-1 rounded-md {}", match reward.tier {
-                                crate::models::GlobalRewardTier::Low => "bg-[#2a1a4e] text-[#b8a9d4]",
-                                crate::models::GlobalRewardTier::Medium => "bg-[#ff2d78] text-[#f0e6ff]",
-                                crate::models::GlobalRewardTier::Jackpot => "bg-[#00f5d4] text-[#1a0a2e]",
-                            }),
-                            match reward.tier {
-                                crate::models::GlobalRewardTier::Low => "Low",
-                                crate::models::GlobalRewardTier::Medium => "Medium",
-                                crate::models::GlobalRewardTier::Jackpot => "Jackpot",
+        } else {
+            ul {
+                class: "list-none w-full gap-2 flex flex-col",
+                for reward in sorted {
+                    li {
+                        class: "p-4 mb-2 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)]",
+                        div {
+                            class: "flex justify-between items-center",
+                            strong {
+                                class: "text-[1.1rem] text-[#00f5d4]",
+                                "{&reward.name}"
+                            }
+                            span {
+                                class: format!("text-sm px-2 py-1 rounded-md {}", match reward.tier {
+                                    GlobalRewardTier::Low => "bg-[#2a1a4e] text-[#4ade80] border border-[#4ade80]",
+                                    GlobalRewardTier::Medium => "bg-[#2a1a4e] text-[#c084fc] border border-[#c084fc]",
+                                    GlobalRewardTier::Jackpot => "bg-[#2a1a4e] text-[#fb923c] border border-[#fb923c]",
+                                }),
+                                match reward.tier {
+                                    GlobalRewardTier::Low => "Low",
+                                    GlobalRewardTier::Medium => "Medium",
+                                    GlobalRewardTier::Jackpot => "Jackpot",
+                                }
                             }
                         }
                     }
