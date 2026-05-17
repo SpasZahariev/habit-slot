@@ -10,6 +10,7 @@ uuid = { version = "1", features = ["v4", "serde"] }
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 dioxus = { version = "=0.7.5", features = ["mobile"], optional = true }
+wry = { version = "=0.53.5", optional = true }
 tokio = { version = "1", features = ["time"], optional = true }
 rusqlite = { version = "0.39", features = ["bundled"], optional = true }
 web-sys = { version = "0.3", features = [
@@ -24,7 +25,7 @@ js-sys = { version = "0.3", optional = true }
 [features]
 default = []
 db = ["dep:rusqlite"]
-dioxus = ["dep:dioxus", "dep:tokio", "dep:web-sys", "dep:wasm-bindgen", "dep:js-sys"]
+dioxus = ["dep:dioxus", "dep:wry", "dep:tokio", "dep:web-sys", "dep:wasm-bindgen", "dep:js-sys"]
 
 [[bin]]
 name = "habit-slot"
