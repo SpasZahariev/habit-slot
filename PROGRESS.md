@@ -230,3 +230,16 @@
 - SPIN button removed from SlotMachine, replaced with LeverSlider wired into `execute_spin(1)` flow
 - `components/mod.rs` exports `LeverSlider`
 - All 74 tests pass (`cargo test --features db`)
+
+## Issue #33: Add rewards via modal + list display ✓ DONE
+
+- `RewardModal` component (`src/components/reward_modal.rs`): overlay with semi-transparent backdrop, name text input, tier radio toggle (Low/Medium/Jackpot)
+- Tier labels color-coded: Low=green `#4ade80`, Medium=purple `#c084fc`, Jackpot=orange `#fb923c`
+- Modal auto-closes on submit and form clears
+- `AppState.add_global_reward()` creates reward with UUID, persists to SQLite via `db.insert_global_reward()`, pushes to in-memory vec
+- `AppState.remove_global_reward()` removes from vec and DB (for future delete functionality)
+- `global_rewards_modal_open` bool flag on AppState controls modal visibility
+- RewardsPage: "Add Reward" button opens modal, rewards sorted newest-first by UUID
+- Updated empty state message with call-to-action text
+- Color-coded tier badges in rewards list match modal colors (green/purple/orange borders)
+- All 73 tests pass (`cargo test --features db`)
