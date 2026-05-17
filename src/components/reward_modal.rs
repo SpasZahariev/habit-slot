@@ -45,7 +45,7 @@ pub fn RewardModal() -> Element {
                                 value: name.read().to_string(),
                                 oninput: move |e| name.set(e.value().to_string()),
                                 placeholder: "e.g. Chocolate Snack",
-                                style: "background: #2a1a4e; border: 1px solid rgba(0,245,212,0.3); border-radius: 8px; padding: 10px 12px; color: #f0e6ff; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; outline: none;",
+                                style: "background: #2a1a4e; border: 1px solid rgba(0,245,212,0.3); border-radius: 8px; padding: 10px 12px; color: #f0e6ff; font-family: Silkscreen; font-size: 0.95rem; outline: none;",
                             }
                         },
 
@@ -81,7 +81,7 @@ pub fn RewardModal() -> Element {
                             button {
                                 type: "submit",
                                 class: "flex-1",
-                                style: "background: #00f5d4; color: #1a0a2e; border: none; border-radius: 8px; padding: 10px 16px; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; cursor: pointer;",
+                                style: "background: #00f5d4; color: #1a0a2e; border: none; border-radius: 8px; padding: 10px 16px; font-family: Silkscreen; font-size: 0.95rem; cursor: pointer;",
                                 "Add"
                             }
                             button {
@@ -91,7 +91,7 @@ pub fn RewardModal() -> Element {
                                     name.set(String::new());
                                     tier.set(GlobalRewardTier::Low);
                                 },
-                                style: "background: #2a1a4e; color: #f0e6ff; border: 1px solid rgba(255,45,120,0.3); border-radius: 8px; padding: 10px 16px; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; cursor: pointer;",
+                                style: "background: #2a1a4e; color: #f0e6ff; border: 1px solid rgba(255,45,120,0.3); border-radius: 8px; padding: 10px 16px; font-family: Silkscreen; font-size: 0.95rem; cursor: pointer;",
                                 "Cancel"
                             }
                         }
@@ -111,7 +111,7 @@ fn format_tier_button(
     let bg = if is_selected { color } else { "#2a1a4e" };
     let fg = if is_selected { "#1a0a2e" } else { color };
     format!(
-        "flex:1; padding:8px 4px; border-radius:8px; font-family:'Pixelify Sans',monospace; font-size:0.8rem; cursor:pointer; text-align:center; background:{}; color:{}; border:2px solid {};",
+        "flex:1; padding:8px 4px; border-radius:8px; font-family:Silkscreen; font-size:0.8rem; cursor:pointer; text-align:center; background:{}; color:{}; border:2px solid {};",
         bg, fg, color
     )
 }

@@ -53,26 +53,26 @@ pub fn HabitModal() -> Element {
 
                         div {
                             style: "display: flex; flex-direction: column; gap: 6px;",
-                            label { style: "color: #f0e6ff; font-family: 'Pixelify Sans', monospace; font-size: 0.85rem;", "Habit Name" }
+                            label { style: "color: #f0e6ff; font-family: Silkscreen; font-size: 0.85rem;", "Habit Name" }
                             input {
                                 r#type: "text",
                                 value: name.read().to_string(),
                                 oninput: move |e| name.set(e.value().to_string()),
                                 placeholder: "e.g. Touch Grass today",
-                                style: "background: #2a1a4e; border: 1px solid rgba(0,245,212,0.3); border-radius: 8px; padding: 10px 12px; color: #f0e6ff; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; outline: none;",
+                                style: "background: #2a1a4e; border: 1px solid rgba(0,245,212,0.3); border-radius: 8px; padding: 10px 12px; color: #f0e6ff; font-family: Silkscreen; font-size: 0.95rem; outline: none;",
                             }
                         },
 
                         div {
                             style: "display: flex; flex-direction: column; gap: 6px;",
-                            label { style: "color: #f0e6ff; font-family: 'Pixelify Sans', monospace; font-size: 0.85rem;", "Target Days (optional)" }
+                            label { style: "color: #f0e6ff; font-family: Silkscreen; font-size: 0.85rem;", "Target Days (optional)" }
                             input {
                                 r#type: "number",
                                 value: target_days.read().to_string(),
                                 oninput: move |e| target_days.set(e.value().to_string()),
                                 placeholder: "0",
                                 min: "0",
-                                style: "background: #2a1a4e; border: 1px solid rgba(0,245,212,0.3); border-radius: 8px; padding: 10px 12px; color: #f0e6ff; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; outline: none;",
+                                style: "background: #2a1a4e; border: 1px solid rgba(0,245,212,0.3); border-radius: 8px; padding: 10px 12px; color: #f0e6ff; font-family: Silkscreen; font-size: 0.95rem; outline: none;",
                             }
                         },
 
@@ -82,13 +82,13 @@ pub fn HabitModal() -> Element {
                                 r#type: "submit",
                                 class: "flex-1",
                                 disabled: !is_name_valid,
-                                style: format!("background: {}; color: #1a0a2e; border: none; border-radius: 8px; padding: 10px 16px; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; cursor: pointer;", if is_name_valid { "#00f5d4" } else { "#3a2a5e" }),
+                                style: format!("background: {}; color: #1a0a2e; border: none; border-radius: 8px; padding: 10px 16px; font-family: Silkscreen; font-size: 0.95rem; cursor: pointer;", if is_name_valid { "#00f5d4" } else { "#3a2a5e" }),
                                 "Add Habit"
                             }
                             button {
                                 r#type: "button",
                                 onclick: close,
-                                style: "background: #2a1a4e; color: #f0e6ff; border: 1px solid rgba(255,45,120,0.3); border-radius: 8px; padding: 10px 16px; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; cursor: pointer;",
+                                style: "background: #2a1a4e; color: #f0e6ff; border: 1px solid rgba(255,45,120,0.3); border-radius: 8px; padding: 10px 16px; font-family: Silkscreen; font-size: 0.95rem; cursor: pointer;",
                                 "Cancel"
                             }
                         }
