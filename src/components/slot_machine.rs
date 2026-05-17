@@ -34,12 +34,13 @@ fn animation_translate_distance() -> i32 {
 #[component]
 pub fn SlotMachine() -> Element {
     let mut app_state = use_context::<Signal<AppState>>();
+    let mut spin_bet = use_signal(|| 1u32);
 
-           let last_result = app_state.read().last_spin_result.clone();
+    let last_result = app_state.read().last_spin_result.clone();
     let is_spinning = app_state.read().is_spinning;
     let animation_strips = app_state.read().animation_strips.clone();
     let reels_stopped = app_state.read().reels_stopped;
-    let coin_balance = app_state.read().coin_balance.balance;
+         let balance_u32 = app_state.read().coin_balance.balance as u32;
 
     if is_spinning && reels_stopped == 0 {
         let mut state_clone = use_context::<Signal<AppState>>().clone();
@@ -123,7 +124,29 @@ pub fn SlotMachine() -> Element {
         " }
 
         div {
-            class: "slot-machine mt-8 p-4 bg-[#1a0a2e] rounded-xl border-2 border-[#ff2d78] w-[96%]",
+            class: "bet-selector flex justify-center gap-2 mb-3",
+            for i in 1..=3u32 {
+                button {
+                    class: format!("px-4 py-2 rounded-lg font-bold text-sm transition-all {}", 
+                        if spin_bet() == i {
+                            "bg-[#ff2d78] text-white shadow-lg shadow-[#ff2d78]/30"
+                        } else {
+                           if balance_u32 >= i && !is_spinning {
+                                "bg-[#2a1a4e] text-[#7a6a9e] hover:bg-[#3a2a5e] hover:text-white"
+                            } else {
+                                "bg-[#1a0a2e] text-[#3a2a5e] cursor-not-allowed"
+                            }
+                        }
+                    ),
+                    disabled: balance_u32 < i || is_spinning,
+                    onclick: move |_| { spin_bet.set(i) },
+                    { format!("{} Coin{}", i, if i == 1 { "" } else { "s" }) }
+                }
+            }
+        }
+
+        div {
+            class: "slot-machine p-4 bg-[#1a0a2e] rounded-xl border-2 border-[#ff2d78] w-[96%]",
 
             if is_spinning && animation_strips.is_some() {
                 AnimatedReels {
@@ -138,10 +161,11 @@ pub fn SlotMachine() -> Element {
             div {
                 class: "flex justify-center mt-4",
                 LeverSlider {
-                    is_disabled: is_spinning || coin_balance < 1,
+                    is_disabled: is_spinning || balance_u32 < spin_bet(),
                     on_trigger: Callback::new(move |_| {
+                        let bet = spin_bet();
                         app_state.with_mut(|state| {
-                            let _ = state.execute_spin(1);
+                            let _ = state.execute_spin(bet);
                         });
                     })
                 }

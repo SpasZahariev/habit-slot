@@ -14,8 +14,8 @@ pub fn HabitList() -> Element {
             onclick: move |_| {
                 app_state.write().habit_modal_open = true;
             },
-            class: "w-full max-w-[420px] mx-auto mt-2 mb-3 rounded-lg font-pixel",
-            style: "padding: 12px 16px; font-size: 0.95rem; background: transparent; border: 2px solid rgba(255,45,120,0.4); color: #f0e6ff; cursor: pointer;",
+            class: "pixel-btn-base pixel-btn-outlined w-full mb-6 cursor-pointer bg-[#2a1a4e] text-[#00f5d4] border-2 border-[#ff2d78] font-bold text-sm py-1",
+            style: "padding-top: 2px; border-radius: 8px !important;",
             "Add Habit"
         }
 
