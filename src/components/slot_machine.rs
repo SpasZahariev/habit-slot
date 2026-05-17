@@ -147,11 +147,10 @@ pub fn SlotMachine() -> Element {
                 }
             }
 
-            if !is_spinning {
-                SpinResultDisplay { spin_result: last_result }
-            } else {
-                div { class: "min-h-[24px]" }
-            }
+        }
+
+        if !is_spinning {
+            SpinResultDisplay { spin_result: last_result }
         }
     }
 }
