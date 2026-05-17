@@ -13,3 +13,50 @@ html, body {
 body {
   font-family: 'Silkscreen', monospace;
 }
+
+/* Pixelated button base - rounded pixel corners + instant state changes */
+.pixel-btn-base {
+  border-radius: 16px !important;
+  image-rendering: pixelated;
+  transition: transform 0.1s steps(1), box-shadow 0.1s steps(1);
+}
+
+/* Raised chunky pixel button - filled variant with rounded corners */
+/* Inset bevel + stepped corner highlights + extrusion shadow */
+.pixel-btn-filled {
+  box-shadow:
+    inset 0   3px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.15),
+    0      6px 0 rgba(0, 0, 0, 0.25),
+    0      4px 0 rgba(0, 0, 0, 0.25),
+    0      2px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* Raised chunky pixel button - outlined variant with rounded corners */
+.pixel-btn-outlined {
+  box-shadow:
+    inset 0   3px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.15),
+    0      6px 0 rgba(0, 0, 0, 0.2),
+    0      4px 0 rgba(0, 0, 0, 0.2),
+    0      2px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Pressed state - button drops down, extrusion collapses */
+.pixel-btn-base:active {
+  transform: translateY(4px);
+}
+
+.pixel-btn-filled:active {
+  box-shadow:
+    inset 0   3px 0 rgba(0, 0, 0, 0.15),
+    inset 0 -3px 0 rgba(255, 255, 255, 0.1),
+    0      1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.pixel-btn-outlined:active {
+  box-shadow:
+    inset 0   3px 0 rgba(0, 0, 0, 0.1),
+    inset 0 -3px 0 rgba(255, 255, 255, 0.1),
+    0      1px 0 rgba(0, 0, 0, 0.15);
+}

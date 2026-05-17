@@ -18,7 +18,7 @@ pub fn HomePage() -> Element {
             AgisAnimation {}
 
             button {
-                class: "nav-button w-full max-w-xs py-btn-padding text-btn-lg font-bold bg-[#ff2d78] text-[#f0e6ff] rounded-xl mb-4 shadow-[0_0_15px_rgba(255,45,120,0.4)] border-none cursor-pointer",
+                class: "pixel-btn-base pixel-btn-filled nav-button w-full max-w-xs py-btn-padding text-btn-lg font-bold bg-[#ff2d78] text-[#f0e6ff] mb-4 cursor-pointer",
                 onclick: move |_| {
                     app_state.with_mut(|state| state.navigate(crate::state::Page::SlotMachine));
                 },
@@ -26,7 +26,7 @@ pub fn HomePage() -> Element {
             }
 
             button {
-                class: "nav-button w-full max-w-xs py-btn-padding text-btn-lg font-bold bg-[#2a1a4e] text-[#00f5d4] rounded-xl mb-4 border-2 border-[#00f5d4] cursor-pointer",
+                class: "pixel-btn-base pixel-btn-outlined nav-button w-full max-w-xs py-btn-padding text-btn-lg font-bold bg-[#2a1a4e] text-[#00f5d4] mb-4 border-2 border-[#ff2d78] cursor-pointer",
                 onclick: move |_| {
                     app_state.with_mut(|state| state.navigate(crate::state::Page::Rewards));
                 },
@@ -34,7 +34,7 @@ pub fn HomePage() -> Element {
             }
 
             button {
-                class: "nav-button w-full max-w-xs py-btn-padding text-btn-lg font-bold bg-[#2a1a4e] text-[#00f5d4] rounded-xl border-2 border-[#ff2d78] cursor-pointer",
+                class: "pixel-btn-base pixel-btn-outlined nav-button w-full max-w-xs py-btn-padding text-btn-lg font-bold bg-[#2a1a4e] text-[#00f5d4] border-2 border-[#ff2d78] cursor-pointer",
                 onclick: move |_| {
                     app_state.with_mut(|state| state.navigate(crate::state::Page::Habits));
                 },
