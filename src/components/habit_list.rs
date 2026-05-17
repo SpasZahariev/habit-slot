@@ -1,6 +1,7 @@
 use crate::state::AppState;
 use dioxus::prelude::*;
 use habit_slot::models::Habit;
+use std::time::Duration;
 
 #[component]
 pub fn HabitList() -> Element {
@@ -35,20 +36,20 @@ pub fn HabitList() -> Element {
 
 #[component]
 pub fn HabitItem(habit: Habit) -> Element {
-    let app_state = use_context::<Signal<AppState>>();
-    let today_count = app_state.read().get_today_count(habit.id);
-    let streak = app_state.read().get_streak(habit.id).current_streak_days;
+    let mut app_state = use_context::<Signal<AppState>>();
+    let mut pulsing = use_signal(|| false);
+
+    let habit_id = habit.id;
 
     rsx! {
         li {
-            class: "habit-item flex items-center justify-between p-4 mb-2 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)] cursor-pointer",
-            onclick: move |_| {},
+            class: "habit-item flex items-center justify-between p-4 mb-2 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)]",
 
             div {
-                class: "flex items-center gap-2 font-pixel",
+                class: "flex items-center gap-2 font-pixel flex-1 min-w-0",
 
                 span {
-                    style: "color: #00f5d4; font-size: 0.95rem;",
+                    style: "color: #00f5d4; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;",
                     "{&habit.name}"
                 }
 
@@ -59,7 +60,7 @@ pub fn HabitItem(habit: Habit) -> Element {
 
                 span {
                     style: "color: #ff2d78; font-size: 0.85rem;",
-                    "🔥 {streak}"
+                    "🔥 {app_state.read().get_streak(habit_id).current_streak_days}"
                 }
 
                 span {
@@ -69,12 +70,26 @@ pub fn HabitItem(habit: Habit) -> Element {
 
                 span {
                     style: "color: rgba(240,230,255,0.6); font-size: 0.85rem;",
-                    "today: {today_count}"
+                    "today: {app_state.read().get_today_count(habit_id)}"
                 }
             }
 
-            div {
-                style: "width: 36px; height: 36px;",
+            button {
+                class: format!("tick-btn {}" , if *pulsing.read() { "tick-pulse" } else { "" }),
+                style: "width: 36px; height: 36px; border-radius: 50%; background: #4ade80; border: none; color: white; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;",
+                onclick: move |_| {
+                    app_state.with_mut(|s| {
+                        s.increment_habit_completion(habit_id);
+                        s.push_toast("✓ Habit ticked".to_string(), 1);
+                    });
+                    *pulsing.write() = true;
+                    spawn(async move {
+                        tokio::time::sleep(Duration::from_millis(300)).await;
+                        pulsing.with_mut(|v| *v = false);
+                    });
+                },
+
+                span { "✓" }
             }
         }
     }
