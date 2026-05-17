@@ -23,11 +23,6 @@ pub fn RewardModal() -> Element {
                     onclick: |e| e.stop_propagation(),
                     style: "background: #1a0a2e; border: 2px solid rgba(255,45,120,0.4); border-radius: 16px; padding: 24px; width: 90%; max-width: 360px;",
 
-                    h2 {
-                        style: "color: #f0e6ff; font-family: 'Pixelify Sans', monospace; margin: 0 0 20px 0; font-size: 1.2rem;",
-                        "Add Reward"
-                    },
-
                     form {
                         onsubmit: move |e| {
                             e.prevent_default();
@@ -49,7 +44,7 @@ pub fn RewardModal() -> Element {
                                 type: "text",
                                 value: name.read().to_string(),
                                 oninput: move |e| name.set(e.value().to_string()),
-                                placeholder: "e.g. New Phone",
+                                placeholder: "e.g. Chocolate Snack",
                                 style: "background: #2a1a4e; border: 1px solid rgba(0,245,212,0.3); border-radius: 8px; padding: 10px 12px; color: #f0e6ff; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; outline: none;",
                             }
                         },
@@ -86,7 +81,7 @@ pub fn RewardModal() -> Element {
                             button {
                                 type: "submit",
                                 class: "flex-1",
-                                style: "background: linear-gradient(135deg, #ff2d78, #c9464f); color: #f0e6ff; border: none; border-radius: 8px; padding: 10px 16px; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; cursor: pointer;",
+                                style: "background: #00f5d4; color: #1a0a2e; border: none; border-radius: 8px; padding: 10px 16px; font-family: 'Pixelify Sans', monospace; font-size: 0.95rem; cursor: pointer;",
                                 "Add"
                             }
                             button {

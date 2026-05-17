@@ -16,13 +16,11 @@ pub fn RewardsPage() -> Element {
     rsx! {
         RewardModal {}
 
-        div {
-            style: "display: flex; justify-content: flex-end; margin-bottom: 12px;",
-            button {
-                onclick: move |_| app_state.write().global_rewards_modal_open = true,
-                style: "background: linear-gradient(135deg, #ff2d78, #c9464f); color: #f0e6ff; border: none; border-radius: 8px; padding: 8px 16px; font-family: 'Pixelify Sans', monospace; font-size: 0.9rem; cursor: pointer;",
-                "Add Reward"
-            }
+        button {
+            class: "pixel-btn-base pixel-btn-outlined w-full mb-6 cursor-pointer bg-[#2a1a4e] text-[#00f5d4] border-2 border-[#ff2d78] font-bold text-sm py-1",
+            style: "padding-top: 2px; border-radius: 8px !important;",
+            onclick: move |_| app_state.write().global_rewards_modal_open = true,
+            "Add Reward"
         }
 
         if sorted.is_empty() {
