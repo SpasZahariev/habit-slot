@@ -37,3 +37,4 @@ All issues up to #35 are DONE.
 Next: Begin with Slice 2 (Issue #38)
 
 - [x] Issue #38: Slice 2: Habit Modal, Add Button, Redesigned Card Layout — DONE
+- [x] Issue #39: Slice 3: Tick Button, Coin Award, Toast, Streak Tracking — DONE
