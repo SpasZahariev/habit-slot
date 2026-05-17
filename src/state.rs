@@ -16,13 +16,13 @@ use habit_slot::streaks;
 
 /// Page navigation enum for simple signal-based routing.
 #[allow(dead_code)]
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Clone, Default, PartialEq, Eq)]
 pub enum Page {
     #[default]
     Home,
     SlotMachine,
     Habits,
-    CreateHabit,
+    HabitDetail(String),
     Rewards,
 }
 
@@ -47,6 +47,10 @@ pub struct AppState {
     pub global_rewards_modal_open: bool,
     /// Is the add-habit modal open?
     pub habit_modal_open: bool,
+    /// Is the delete-confirmation modal open?
+    pub delete_confirm_open: bool,
+    /// Which habit is pending deletion (set when delete modal opens).
+    pub deleting_habit_id: Option<Uuid>,
     /// Reels are currently animating.
     pub is_spinning: bool,
     /// Animation strips for each reel column during spin. Each strip contains filler + result symbols.
@@ -74,6 +78,8 @@ impl Default for AppState {
             global_rewards: vec![],
             global_rewards_modal_open: false,
             habit_modal_open: false,
+            delete_confirm_open: false,
+            deleting_habit_id: None,
             #[cfg(feature = "db")]
             db: None,
         }
@@ -113,6 +119,8 @@ impl AppState {
             global_rewards: db.load_global_rewards().ok().unwrap_or_default(),
             global_rewards_modal_open: false,
             habit_modal_open: false,
+            delete_confirm_open: false,
+            deleting_habit_id: None,
             db: None,
         })
     }
@@ -322,6 +330,48 @@ impl AppState {
     /// Navigate back to home.
     pub fn go_home(&mut self) {
         self.current_page = Page::Home;
+    }
+
+    /// Navigate to the Habits page.
+    pub fn go_habits(&mut self) {
+        self.current_page = Page::Habits;
+    }
+
+    /// Navigate to the detail page for a specific habit.
+    pub fn navigate_habit_detail(&mut self, habit_id: Uuid) {
+        self.current_page = Page::HabitDetail(habit_id.to_string());
+    }
+
+    /// Open the delete confirmation modal for a habit.
+    pub fn open_delete_confirm(&mut self, habit_id: Uuid) {
+        self.deleting_habit_id = Some(habit_id);
+        self.delete_confirm_open = true;
+    }
+
+    /// Close the delete confirmation modal without deleting.
+    pub fn close_delete_confirm(&mut self) {
+        self.delete_confirm_open = false;
+        self.deleting_habit_id = None;
+    }
+
+    /// Confirm deletion of the pending habit, then navigate back to Habits list.
+    pub fn confirm_delete_habit(&mut self) {
+        if let Some(id) = self.deleting_habit_id {
+            self.remove_habit(id);
+            self.delete_confirm_open = false;
+            self.deleting_habit_id = None;
+            self.current_page = Page::Habits;
+        }
+    }
+
+    /// Look up a habit name by its string id. Returns "Habit" if not found.
+    pub fn get_habit_name(&self, id_str: &str) -> String {
+        if let Ok(id) = Uuid::parse_str(id_str) {
+            if let Some(habit) = self.habits.iter().find(|h| h.id == id) {
+                return habit.name.clone();
+            }
+        }
+        "Habit".to_string()
     }
 
     /// Check if a habit is completed today.

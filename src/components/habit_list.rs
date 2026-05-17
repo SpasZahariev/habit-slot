@@ -55,6 +55,10 @@ pub fn HabitRow(habit: Habit) -> Element {
 
             div {
                 class: "habit-card flex-1 min-w-0 p-4 bg-[#2a1a4e] rounded-lg border border-[rgba(255,45,120,0.2)]",
+                style: "cursor: pointer;",
+                onclick: move |_| {
+                    app_state.with_mut(|s| s.navigate_habit_detail(habit_id));
+                },
 
                 div {
                     class: "flex items-center gap-2 font-pixel flex-1 min-w-0",
@@ -89,7 +93,8 @@ pub fn HabitRow(habit: Habit) -> Element {
             button {
                 class: format!("tick-btn {}" , if *pulsing.read() { "tick-pulse" } else { "" }),
                 style: "width: 40px; height: 40px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0;",
-                onclick: move |_| {
+                onclick: move |e| {
+                    e.stop_propagation();
                     app_state.with_mut(|s| {
                         s.increment_habit_completion(habit_id);
                         s.push_toast("✓ Habit ticked".to_string(), 1);

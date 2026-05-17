@@ -1,6 +1,7 @@
 mod agis_animation;
 mod calendar_heatmap;
 mod coin_footer_bar;
+mod habit_detail_page;
 mod habit_list;
 mod habit_modal;
 mod home_page;
@@ -14,6 +15,8 @@ mod toast_container;
 pub use agis_animation::AgisAnimation;
 pub use calendar_heatmap::CalendarHeatmap;
 pub use coin_footer_bar::CoinFooterBar;
+pub use habit_detail_page::DeleteConfirmationModal;
+pub use habit_detail_page::HabitDetailPage;
 pub use habit_list::HabitList;
 pub use habit_modal::HabitModal;
 pub use home_page::HomePage;

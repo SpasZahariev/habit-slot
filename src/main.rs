@@ -2,7 +2,7 @@ mod components;
 mod state;
 
 use crate::components::{
-    CoinFooterBar, HabitList, HabitModal, HomePage, NavBar, RewardsPage, SlotMachine, ToastContainer,
+    CoinFooterBar, DeleteConfirmationModal, HabitDetailPage, HabitList, HabitModal, HomePage, NavBar, RewardsPage, SlotMachine, ToastContainer,
 };
 use crate::state::{use_app_state, Page};
 use dioxus::prelude::*;
@@ -67,7 +67,9 @@ fn App() -> Element {
                         HabitList {}
                         HabitModal {}
                     },
-                    Page::CreateHabit => rsx! { NavBar {} },
+                    Page::HabitDetail(ref habit_id) => rsx! {
+                        HabitDetailPage { habit_id: habit_id.clone() }
+                    },
                     Page::Rewards => rsx! { RewardsPage {} },
                 }
             }
