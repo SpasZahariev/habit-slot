@@ -143,6 +143,15 @@ pub fn coin_icon_uri() -> &'static str {
     GOLD_COINS_URI
 }
 
+const BACK_ARROW_URI: &str = concat!(
+    "data:image/png;base64,",
+    include_str!("back_arrow_base64.txt")
+);
+
+pub fn back_arrow_uri() -> &'static str {
+    BACK_ARROW_URI
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

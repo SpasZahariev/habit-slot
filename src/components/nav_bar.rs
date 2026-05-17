@@ -1,5 +1,6 @@
 use crate::state::{AppState, Page};
 use dioxus::prelude::*;
+use habit_slot::sprites::back_arrow_uri;
 
 #[component]
 pub fn NavBar() -> Element {
@@ -16,16 +17,20 @@ pub fn NavBar() -> Element {
 
     rsx! {
         div {
-            class: "flex items-center gap-4 w-full mb-6 pb-3 border-b border-[#ff2d78]/30",
+            class: "flex items-center gap-3 w-full mb-6 pb-3 border-b border-[#ff2d78]/30",
             button {
-                class: "text-5xl font-bold text-[#ff2d78] cursor-pointer bg-none border-none p-0 leading-none",
+                class: "cursor-pointer bg-none border-none p-0 flex items-center",
                 onclick: move |_| {
                     app_state.with_mut(|state| state.go_home());
                 },
-                "\u{2190}"
+                img {
+                    src: back_arrow_uri(),
+                    class: "h-4 w-auto object-contain",
+                    alt: "Back",
+                }
             }
             h2 {
-                class: "text-xl text-[#f0e6ff]",
+                class: "text-xl font-semibold text-[#f0e6ff] leading-none self-center",
                 "{title}"
             }
         }
