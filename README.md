@@ -6,7 +6,59 @@ A casino-themed habit tracker Android app built with **Rust** + **Dioxus**, wher
 
 ## Screenshots
 
-<!-- Add screenshots from the Android app here -->
+### Home & Habit Tracking
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/home-page.png" width="220" alt="Home page — habit list with streak and coin balance" />
+      <br /><em>Home page</em>
+    </td>
+    <td align="center">
+      <img src="docs/images/habit-page.png" width="220" alt="Habit completion page with checkmarks" />
+      <br /><em>Habit page</em>
+    </td>
+  </tr>
+</table>
+
+### Rewards & Slot Machine
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/rewards-page.png" width="220" alt="Rewards page showing available rewards" />
+      <br /><em>Rewards page</em>
+    </td>
+    <td align="center">
+      <img src="docs/images/slot-machine-page.png" width="220" alt="Slot machine with animated reels" />
+      <br /><em>Slot machine</em>
+    </td>
+  </tr>
+</table>
+
+### Habit Management & Details
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/create-habit-modal.png" width="220" alt="Create habit modal with name, target days, and coin reward" />
+      <br /><em>Create habit</em>
+    </td>
+    <td align="center">
+      <img src="docs/images/habit-details.png" width="220" alt="Habit details with streak stats and calendar heatmap" />
+      <br /><em>Habit details</em>
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/create-reward-modal.png" width="220" alt="Create reward modal" />
+      <br /><em>Create reward</em>
+    </td>
+  </tr>
+</table>
 
 ---
 
