@@ -81,23 +81,20 @@ pub fn HabitModal() -> Element {
                         },
 
                         div {
-                            style: "display: flex; flex-direction: column; gap: 6px;",
+                            style: "background: #2a1a4e; border-radius: 8px; padding: 12px; border: 1px solid rgba(255,45,120,0.2); display: flex; flex-direction: column;",
                             label { style: "color: #f0e6ff; font-family: Silkscreen; font-size: 0.85rem;", "Coin Reward" }
                             div {
-                                style: "display: flex; gap: 8px;",
+                                style: "display: flex; gap: 6px; margin-top: 6px;",
                                 for val in [1u32, 3, 5] {
                                     button {
                                         r#type: "button",
                                         onclick: move |_| coin_reward.set(val),
                                         style: format!(
-                                            "flex: 1; border-radius: 8px; padding: 8px; font-family: Silkscreen; font-size: 0.95rem; cursor: pointer; border: 2px solid {}; background: {}; color: #1a0a2e;",
-                                            if *coin_reward.read() == val { "rgba(255,255,255,0.3)" } else { "transparent" },
-                                            match val {
-                                                1 => "#4ade80",
-                                                3 => "#a855f7",
-                                                5 => "#f97316",
-                                                _ => "#4ade80",
-                                            }
+                                            "flex: 1; border-radius: 8px; padding: 2px 6px; font-family: Silkscreen; font-size: 0.95rem; cursor: pointer; border: 2px solid {}; background: #1a0a2e; color: {};",
+                                            if *coin_reward.read() == val {
+                                                match val { 1 => "#4ade80", 3 => "#a855f7", 5 => "#f97316", _ => "#4ade80" }
+                                            } else { "transparent" },
+                                            match val { 1 => "#4ade80", 3 => "#a855f7", 5 => "#f97316", _ => "#4ade80" }
                                         ),
                                         { format!("{} coin{}", val, if val > 1 { "s" } else { "" }) }
                                     }
