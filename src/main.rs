@@ -5,9 +5,20 @@ use crate::components::{
     CoinFooterBar, HabitDetailPage, HabitList, HabitModal, HomePage, NavBar, RewardsPage, SlotMachine, ToastContainer,
 };
 use crate::state::{use_app_state, Page};
+#[cfg(target_os = "android")]
+use std::sync::atomic::Ordering;
 use dioxus::prelude::*;
 
 const TAILWIND_CSS: &str = include_str!("./css/tailwind.css");
+
+#[cfg(target_os = "android")]
+static TAKE_BACK_PRESS: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[cfg(target_os = "android")]
+#[no_mangle]
+unsafe extern "system" fn Java_dev_dioxus_main_MainActivity_signalBackPressed(_env: *mut std::ffi::c_void, _class: *mut std::ffi::c_void) {
+    TAKE_BACK_PRESS.store(true, std::sync::atomic::Ordering::SeqCst);
+}
 
 #[cfg(target_os = "android")]
 fn set_android_flags() {
@@ -41,6 +52,25 @@ fn App() -> Element {
     provide_context(app_state.clone());
 
     use_effect(|| set_android_flags());
+
+    #[cfg(target_os = "android")]
+    {
+        let mut back_state = app_state.clone();
+        use_future(move || async move {
+            loop {
+                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                if TAKE_BACK_PRESS.swap(false, Ordering::SeqCst) {
+                    let navigated = back_state.with_mut(|s| s.handle_back());
+                    if !navigated {
+                        use wry::prelude::dispatch;
+                        dispatch(|env, activity, _webview| {
+                            env.call_method(activity, "finish", "()V", &[]).ok();
+                        });
+                    }
+                }
+            }
+        });
+    }
 
     let current_page = app_state.read().current_page.clone();
 

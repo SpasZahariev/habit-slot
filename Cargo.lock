@@ -1892,6 +1892,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dioxus",
+ "jni 0.21.1",
  "js-sys",
  "rand 0.8.6",
  "rstest",

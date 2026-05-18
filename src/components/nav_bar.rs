@@ -16,10 +16,7 @@ pub fn NavBar() -> Element {
     };
 
     let back_action = move |_| {
-        app_state.with_mut(|state| match state.current_page {
-            Page::HabitDetail(_) => state.go_habits(),
-            _ => state.go_home(),
-        });
+        let _ = app_state.with_mut(|state| state.handle_back());
     };
 
     rsx! {

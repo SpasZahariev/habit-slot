@@ -21,11 +21,12 @@ web-sys = { version = "0.3", features = [
 ], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 js-sys = { version = "0.3", optional = true }
+jni = { version = "0.21", optional = true }
 
 [features]
 default = []
 db = ["dep:rusqlite"]
-dioxus = ["dep:dioxus", "dep:wry", "dep:tokio", "dep:web-sys", "dep:wasm-bindgen", "dep:js-sys"]
+dioxus = ["dep:dioxus", "dep:wry", "dep:tokio", "dep:web-sys", "dep:wasm-bindgen", "dep:js-sys", "dep:jni"]
 
 [[bin]]
 name = "habit-slot"

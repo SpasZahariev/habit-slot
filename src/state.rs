@@ -360,6 +360,22 @@ impl AppState {
         self.current_page = Page::HabitDetail(habit_id.to_string());
     }
 
+    /// Handle a back navigation request (hardware back button or NavBar).
+    /// Returns true if navigation occurred, false if already on Home.
+    pub fn handle_back(&mut self) -> bool {
+        match self.current_page {
+            Page::Home => false,
+            Page::HabitDetail(_) => {
+                self.current_page = Page::Habits;
+                true
+            }
+            _ => {
+                self.current_page = Page::Home;
+                true
+            }
+        }
+    }
+
     /// Open the delete confirmation modal for a habit.
     pub fn open_delete_confirm(&mut self, habit_id: Uuid) {
         self.deleting_habit_id = Some(habit_id);
