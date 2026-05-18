@@ -27,7 +27,7 @@ pub fn NavBar() -> Element {
                 onclick: back_action,
                 img {
                     src: back_arrow_uri(),
-                    class: "h-4 w-auto object-contain",
+                    class: "h-[27.2px] w-auto object-contain",
                     alt: "Back",
                 }
             }

@@ -72,6 +72,41 @@ fn App() -> Element {
         });
     }
 
+    let is_loaded = app_state.read().is_loaded;
+    let db_error = app_state.read().db_error.clone();
+
+    if !is_loaded {
+        return rsx! {
+            Meta { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" }
+            style { "@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap'); {TAILWIND_CSS}" }
+
+            div {
+                style: "height: 100vh;",
+                class: "flex flex-col items-center justify-center font-pixel bg-gradient-to-b from-[#1a0a2e] to-[#2d1b69] text-[#f0e6ff]",
+
+                div { class: "text-4xl mb-4 animate-pulse" }
+                p { class: "text-sm opacity-70" }
+            }
+        };
+    }
+
+    if db_error.is_some() {
+        let error_msg = db_error.unwrap_or_else(|| "Unknown database error".into());
+        return rsx! {
+            Meta { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" }
+            style { "@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap'); {TAILWIND_CSS}" }
+
+            div {
+                style: "height: 100vh;",
+                class: "flex flex-col items-center justify-center font-pixel bg-gradient-to-b from-[#1a0a2e] to-[#2d1b69] text-[#f0e6ff] px-8",
+
+                div { class: "text-2xl mb-4 text-red-400" }
+                p { class: "text-xs opacity-70 text-center mb-4", "{error_msg}" }
+                p { class: "text-xs opacity-50 text-center" }
+            }
+        };
+    }
+
     let current_page = app_state.read().current_page.clone();
 
     rsx! {

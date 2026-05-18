@@ -1,6 +1,29 @@
 use std::collections::HashMap;
+#[cfg(all(feature = "db", target_os = "android"))]
+use std::sync::Mutex;
 #[cfg(feature = "db")]
 use std::rc::Rc;
+
+// Android package name — matches MainActivity.kt package declaration
+#[cfg(all(feature = "db", target_os = "android"))]
+const ANDROID_PACKAGE: &str = "dev.dioxus.main";
+
+/// Resolved files directory path from Kotlin via JNI.
+#[cfg(all(feature = "db", target_os = "android"))]
+static FILES_DIR_PATH: Mutex<Option<String>> = Mutex::new(None);
+
+/// JNI entry point — called by MainActivity.onCreate() with the persistent files dir.
+#[cfg(all(feature = "db", target_os = "android"))]
+#[no_mangle]
+unsafe extern "system" fn Java_dev_dioxus_main_MainActivity_initDbPath(
+    mut env: jni::JNIEnv,
+    _class: jni::objects::JClass,
+    path: jni::objects::JString,
+) {
+    if let Ok(s) = env.get_string(&path) {
+        *FILES_DIR_PATH.lock().unwrap() = Some(s.to_string_lossy().to_string());
+    }
+}
 
 use dioxus::prelude::*;
 use uuid::Uuid;
@@ -57,6 +80,10 @@ pub struct AppState {
     pub animation_strips: Option<[Vec<SlotSymbol>; 3]>,
     /// Number of reels that have finished their staggered animation (0..3).
     pub reels_stopped: u8,
+    /// DB has been loaded from disk. Used to gate the loading splash screen.
+    pub is_loaded: bool,
+    /// Error message if DB initialization failed.
+    pub db_error: Option<String>,
     #[cfg(feature = "db")]
     pub db: Option<Rc<habit_slot::db::Db>>,
 }
@@ -80,6 +107,8 @@ impl Default for AppState {
             habit_modal_open: false,
             delete_confirm_open: false,
             deleting_habit_id: None,
+            is_loaded: false,
+            db_error: None,
             #[cfg(feature = "db")]
             db: None,
         }
@@ -93,7 +122,7 @@ impl AppState {
         let habits = db.load_habits().ok()?;
         let completions = db.load_completions().ok()?;
         let coin_balance = db.load_coin_balance().ok()?;
-        let pity_losses = db.load_pity_counter().ok()?.or_default();
+        let pity_losses = db.load_pity_counter().ok().unwrap_or_default();
 
         let mut milestone_trackers = HashMap::new();
         for habit in &habits {
@@ -121,14 +150,10 @@ impl AppState {
             habit_modal_open: false,
             delete_confirm_open: false,
             deleting_habit_id: None,
+            is_loaded: true,
+            db_error: None,
             db: None,
         })
-    }
-
-    /// Attach a shared DB reference for write-through persistence.
-    pub fn with_db(mut self, db: Rc<habit_slot::db::Db>) -> Self {
-        self.db = Some(db);
-        self
     }
 
     /// Persist new transactions to DB from the given index onward.
@@ -170,7 +195,7 @@ impl AppState {
             coin_reward,
         };
         let id = habit.id;
-        let _created_at = habit.created_at;
+        let created_at = habit.created_at;
         self.milestone_trackers
             .insert(id, MilestoneTracker::default());
         self.habits.push(habit);
@@ -250,7 +275,7 @@ impl AppState {
             .find(|h| h.id == habit_id)
             .map(|h| h.coin_reward)
             .unwrap_or(1);
-        let _tx_count_before = self.coin_balance.transactions.len();
+        let tx_count_before = self.coin_balance.transactions.len();
         economy::on_habit_tick(&mut self.coin_balance, habit_coin_reward);
         #[cfg(feature = "db")]
         self.persist_new_transactions(tx_count_before);
@@ -472,6 +497,8 @@ impl AppState {
     /// Deducts bet, resolves spin, selects global reward, credits ExtraRoll winnings.
     /// Returns the SpinResult. Prepares animation strips for reel animation.
     pub fn execute_spin(&mut self, bet: u32) -> Option<SpinResult> {
+        let tx_before = self.coin_balance.transactions.len();
+
         if !economy::spend(&mut self.coin_balance, bet, format!("Bet {} coins", bet)) {
             return None;
         }
@@ -518,7 +545,6 @@ impl AppState {
 
         #[cfg(feature = "db")]
         {
-            let tx_before = self.coin_balance.transactions.len();
             self.persist_new_transactions(tx_before);
             self.persist_pity_counter();
         }
@@ -567,7 +593,7 @@ impl AppState {
             name,
             tier,
         };
-        let _id = reward.id;
+        let id = reward.id;
 
         #[cfg(feature = "db")]
         if let Some(db) = &self.db {
@@ -588,16 +614,56 @@ impl AppState {
     }
 }
 
-/// Create a new writable signal for the app state.
+/// Create a new writable signal for the app state backed by SQLite.
+/// Initializes with empty state + loading flag, then asynchronously opens DB and loads data.
+#[cfg(feature = "db")]
 pub fn use_app_state() -> Signal<AppState> {
-    let mut s = AppState::default();
-    // TEMP: give 7 coins for testing, remove before release
-    s.coin_balance.balance = 7;
-    use_signal(move || s.clone())
+    let app_state = use_signal(|| AppState::default());
+
+    // Spawn async DB init task
+    {
+        let mut state = app_state.clone();
+        use_future(move || async move {
+            match resolve_and_open_db() {
+                Ok(db) => {
+                    let db_rc = Rc::new(db);
+                    if let Some(mut loaded) = AppState::from_db(&db_rc) {
+                        loaded.db = Some(db_rc.clone());
+                        state.with_mut(|s| *s = loaded);
+                    } else {
+                        state.with_mut(|s| {
+                            s.is_loaded = true;
+                            s.db_error = Some("Failed to load data from database".into());
+                        });
+                    }
+                }
+                Err(e) => {
+                    state.with_mut(|s| {
+                        s.is_loaded = true;
+                        s.db_error = Some(format!("Database error: {}", e));
+                    });
+                }
+            }
+        });
+    }
+
+    app_state
 }
 
-/// Create app state backed by a SQLite database (requires `db` feature).
-#[cfg(feature = "db")]
-pub fn use_app_state_with_db(db: Rc<habit_slot::db::Db>) -> Signal<AppState> {
-    use_signal(|| AppState::from_db(&db).unwrap_or_default().with_db(db))
+/// Resolve DB path from JNI-provided files dir and open it.
+#[cfg(all(feature = "db", target_os = "android"))]
+fn resolve_and_open_db() -> Result<habit_slot::db::Db, String> {
+    let files_dir = FILES_DIR_PATH.lock().unwrap();
+    let db_path = if let Some(dir) = files_dir.as_ref() {
+        format!("{}/habit-slot.db", dir)
+    } else {
+        return Err("FilesDir not provided by Android (JNI call may not have run yet)".into());
+    };
+    habit_slot::db::Db::open(&db_path).map_err(|e| e.to_string())
+}
+
+/// Open the database in a local file (non-Android / desktop).
+#[cfg(all(feature = "db", not(target_os = "android")))]
+fn resolve_and_open_db() -> Result<habit_slot::db::Db, String> {
+    habit_slot::db::Db::open("habit-slot.db").map_err(|e| e.to_string())
 }
