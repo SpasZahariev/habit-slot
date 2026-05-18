@@ -6,7 +6,18 @@ A casino-themed habit tracker Android app built with **Rust** + **Dioxus**, wher
 
 ## Screenshots
 
-### Home & Habit Tracking
+<table>
+  <tr><td align="center"><img src="docs/images/portfolio/home-page.png" width="800" alt="Home page — habit list with streaks and soul coin balance" /></td></tr>
+  <tr><td align="center"><img src="docs/images/portfolio/slot-machine-page.png" width="800" alt="Slot machine — spin reels for variable rewards" /></td></tr>
+  <tr><td align="center"><img src="docs/images/portfolio/habit-details.png" width="800" alt="Habit details — streak stats and calendar heatmap" /></td></tr>
+  <tr><td align="center"><img src="docs/images/portfolio/three-remaining-pages.png" width="800" alt="Additional app screens — rewards, create habit, create reward" /></td></tr>
+</table>
+
+---
+
+### Phone Screenshots (Portrait)
+
+#### Home & Habit Tracking
 
 <table>
   <tr>
