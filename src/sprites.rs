@@ -20,7 +20,7 @@ const EXTRA_ROLL_COINS_URI: &str = concat!(
 
 /// Single source of truth for all slot symbol properties.
 /// To add a new symbol: add an entry to this array and update the SlotSymbol enum.
-/// Weights: Heart 17/14/11 (42, ~38.9%), Skull 10/6 (16, ~14.8%), Chest 7 (~6.5%), ExtraRoll 14 (~13.0%)
+/// Weights: Heart 17/14/11 (42, 30%), Skull 22/14 (36, 25.7%), Chest 28 (20%), ExtraRoll 34 (24.3%)
 pub static SYMBOLS: [SpriteConfig; 7] = [
     SpriteConfig {
         display_name: "Heart",
@@ -43,25 +43,25 @@ pub static SYMBOLS: [SpriteConfig; 7] = [
     SpriteConfig {
         display_name: "Skull",
         tier: RewardTier::Medium,
-        weight: 10.0,
+        weight: 22.0,
         sprite_uri: MED_SKULL_URI,
     },
     SpriteConfig {
         display_name: "Skull",
         tier: RewardTier::Medium,
-        weight: 6.0,
+        weight: 14.0,
         sprite_uri: MED_SKULL_URI,
     },
     SpriteConfig {
         display_name: "Chest",
         tier: RewardTier::Jackpot,
-        weight: 7.0,
+        weight: 28.0,
         sprite_uri: HIGH_CHEST_URI,
     },
     SpriteConfig {
         display_name: "ExtraRoll",
         tier: RewardTier::ExtraRoll,
-        weight: 14.0,
+        weight: 34.0,
         sprite_uri: EXTRA_ROLL_COINS_URI,
     },
 ];
