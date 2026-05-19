@@ -518,31 +518,48 @@ impl AppState {
         let mut result = slot::spin_with_state(&mut losses, bet, has_medium, has_high);
         self.pity_counter.consecutive_losses = losses;
 
-        if result.tier != habit_slot::models::RewardTier::None {
-            let (reward_tier, payout_coins) =
-                slot::resolve_reward(result.tier, bet, has_medium, has_high);
+        if !result.row_rewards.is_empty() || result.payout_coins > 0 {
+            let extra_roll_coins = result.payout_coins;
 
-            result.payout_coins = payout_coins;
-            result.reward_tier_given = reward_tier;
-
-            if result.tier == habit_slot::models::RewardTier::ExtraRoll {
-                economy::earn(
-                    &mut self.coin_balance,
-                    payout_coins,
-                    format!("Slot win: ExtraRoll"),
-                );
-                result.reward_note = format!("+{} coins", payout_coins);
-            } else if let Some(given_tier) = reward_tier {
-                let global_tier =
-                    Self::slot_tier_to_global(given_tier).unwrap_or(GlobalRewardTier::Low);
-                if let Some(selected) =
-                    rewards::select_global_reward_by_tier(&self.global_rewards, global_tier)
-                {
-                    result.reward_note = selected.name;
-                } else {
-                    result.reward_note = format!("{} reward", given_tier);
+            // Select global rewards for each non-ExtraRoll row
+            let mut reward_counts: HashMap<String, u32> = HashMap::new();
+            for row_reward in &result.row_rewards {
+                if let Some(global_tier) = Self::slot_tier_to_global(row_reward.given_tier) {
+                    if let Some(selected) =
+                        rewards::select_global_reward_by_tier(&self.global_rewards, global_tier)
+                    {
+                        *reward_counts.entry(selected.name).or_default() += row_reward.multiplier;
+                    }
                 }
             }
+
+            // Aggregate into reward note: "Nx Name" for duplicates, joined with " + "
+            let mut reward_note_parts: Vec<String> = Vec::new();
+            for (name, count) in &reward_counts {
+                let entry_note = if *count > 1 {
+                    format!("{}x {}", count, name)
+                } else {
+                    name.clone()
+                };
+                reward_note_parts.push(entry_note);
+            }
+            let mut reward_note = reward_note_parts.join(" + ");
+
+            // Credit ExtraRoll coins independently
+            if extra_roll_coins > 0 {
+                economy::earn(
+                    &mut self.coin_balance,
+                    extra_roll_coins,
+                    format!("Slot win: ExtraRoll"),
+                );
+                if !reward_note.is_empty() {
+                    reward_note.push_str(&format!(" + +{} coins", extra_roll_coins));
+                } else {
+                    reward_note = format!("+{} coins", extra_roll_coins);
+                }
+            }
+
+            result.reward_note = reward_note;
         }
 
         #[cfg(feature = "db")]
