@@ -1,6 +1,8 @@
 //! Slot engine — pure logic, no UI dependencies.
 //! Spin resolution, reel generation, symbol matching, reward resolution.
 
+pub mod reward_resolution;
+
 use crate::models::{RewardTier, SlotSymbol, SpinResult};
 use crate::sprites;
 use rand::thread_rng;
