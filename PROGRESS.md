@@ -46,7 +46,8 @@ Next: Begin with Slice 2 (Issue #38)
 - [x] Issue #47: Create reward_resolution module with pure multi-row fallback logic — DONE
 - [x] Issue #48: Update SpinResult model and slot engine for multi-row wins — DONE
 
-Next: Issue #49 (Integrate multi-row rewards into execute_spin with toast aggregation)
+- [x] Issue #49: Integrate multi-row rewards into execute_spin with toast aggregation — DONE
+- [x] Issue #50: Update slot machine UI for multi-win display — DONE
 
 ---
 
