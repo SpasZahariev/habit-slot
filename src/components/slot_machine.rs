@@ -43,9 +43,12 @@ pub fn SlotMachine() -> Element {
     let balance_u32 = app_state.read().coin_balance.balance as u32;
     let has_low_rewards = app_state.read().has_any_low_tier_rewards();
 
-    if is_spinning && reels_stopped == 0 {
+    let mut timer_spawned = use_signal(|| false);
+
+    if is_spinning && reels_stopped == 0 && !timer_spawned() {
+        timer_spawned.set(true);
         let mut state_clone = use_context::<Signal<AppState>>().clone();
-          spawn(async move {
+        spawn(async move {
             tokio::time::sleep(std::time::Duration::from_millis(2500)).await;
             state_clone.with_mut(|s| s.stop_one_reel());
 
@@ -55,6 +58,11 @@ pub fn SlotMachine() -> Element {
             tokio::time::sleep(std::time::Duration::from_millis(1200)).await;
             state_clone.with_mut(|s| s.stop_one_reel());
         });
+    }
+
+    // Reset timer flag when spin completes
+    if !is_spinning && timer_spawned() {
+        timer_spawned.set(false);
     }
 
     // Negative translateY value for the end position of the animation.
