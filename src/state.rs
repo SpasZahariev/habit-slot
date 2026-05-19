@@ -506,19 +506,19 @@ impl AppState {
         }
 
         let mut losses = self.pity_counter.consecutive_losses;
-        let mut result = slot::spin_with_state(&mut losses, bet);
+        let has_medium = self
+            .global_rewards
+            .iter()
+            .any(|r| r.tier == GlobalRewardTier::Medium);
+        let has_high = self
+            .global_rewards
+            .iter()
+            .any(|r| r.tier == GlobalRewardTier::Jackpot);
+
+        let mut result = slot::spin_with_state(&mut losses, bet, has_medium, has_high);
         self.pity_counter.consecutive_losses = losses;
 
         if result.tier != habit_slot::models::RewardTier::None {
-            let has_medium = self
-                .global_rewards
-                .iter()
-                .any(|r| r.tier == GlobalRewardTier::Medium);
-            let has_high = self
-                .global_rewards
-                .iter()
-                .any(|r| r.tier == GlobalRewardTier::Jackpot);
-
             let (reward_tier, payout_coins) =
                 slot::resolve_reward(result.tier, bet, has_medium, has_high);
 

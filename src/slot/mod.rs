@@ -189,23 +189,19 @@ pub fn resolve_reward(
     }
 }
 
-/// Calculate coin payout for a matched row. Only ExtraRoll pays coins (bet + 1).
-fn calc_payout(best_match: [SlotSymbol; 3], bet: u32) -> u32 {
-    if symbol_tier(best_match[0]) == RewardTier::ExtraRoll {
-        bet + 1
-    } else {
-        0
-    }
-}
-
 /// Resolve a spin given a bet amount. Generates reels, checks paylines, calculates payout.
 pub fn spin(bet: u32) -> SpinResult {
     let mut consecutive_losses: u32 = 0;
-    spin_with_state(&mut consecutive_losses, bet)
+    spin_with_state(&mut consecutive_losses, bet, true, true)
 }
 
 /// Resolve a spin with persistent pity state tracking.
-pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
+pub fn spin_with_state(
+    consecutive_losses: &mut u32,
+    bet: u32,
+    has_med: bool,
+    has_high: bool,
+) -> SpinResult {
     let mut rng = thread_rng();
 
     let should_pity_win = *consecutive_losses >= PITY_THRESHOLD - 1;
@@ -222,17 +218,11 @@ pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
         normal_reels
     };
 
-    let best_match = find_best_match(&reels);
+    let winning_rows = find_all_winning_rows(&reels);
 
-    let tier = match &best_match {
-        Some(row) => symbol_tier(row[0]),
-        None => RewardTier::None,
-    };
+    let tier = highest_tier_from_wins(&reels, &winning_rows);
 
-    let payout_coins = match &best_match {
-        Some(row) => calc_payout(*row, bet),
-        None => 0,
-    };
+    let payout_coins = calc_multi_row_payout(&reels, &winning_rows, bet);
 
     // Update pity state after determining result
     let _ = update_pity_state(
@@ -242,63 +232,115 @@ pub fn spin_with_state(consecutive_losses: &mut u32, bet: u32) -> SpinResult {
 
     let is_near_miss = tier == RewardTier::None && has_near_miss_pattern(&reels);
 
+    let row_rewards = reward_resolution::resolve_all_wins(reels, bet, has_med, has_high);
+
+    let symbols_matched = match winning_rows.iter().max_by_key(|&&(row_idx, _sym)| {
+        symbol_tier_order(reels[0][row_idx])
+    }) {
+        Some(&(_row_idx, sym)) => Some((sym, 3)),
+        None => None,
+    };
+
     SpinResult {
         reels,
-        symbols_matched: best_match.map(|row| (row[0], 3)),
+        symbols_matched,
         tier,
         payout_coins,
         is_near_miss,
         reward_tier_given: None,
         reward_note: String::new(),
+        winning_rows,
+        row_rewards,
     }
 }
 
 /// Resolve a spin from pre-generated reels (no RNG). Used for testing.
 pub fn resolve_reels(reels: [[SlotSymbol; 3]; 3], bet: u32) -> SpinResult {
-    let best_match = find_best_match(&reels);
+    let winning_rows = find_all_winning_rows(&reels);
 
-    let tier = match &best_match {
-        Some(row) => symbol_tier(row[0]),
-        None => RewardTier::None,
-    };
+    let tier = highest_tier_from_wins(&reels, &winning_rows);
 
-    let payout_coins = match &best_match {
-        Some(row) => calc_payout(*row, bet),
-        None => 0,
-    };
+    let payout_coins = calc_multi_row_payout(&reels, &winning_rows, bet);
 
     let is_near_miss = tier == RewardTier::None && has_near_miss_pattern(&reels);
 
+    let row_rewards = reward_resolution::resolve_all_wins(reels, bet, true, true);
+
+    let symbols_matched = match winning_rows.iter().max_by_key(|&&(row_idx, _sym)| {
+        symbol_tier_order(reels[0][row_idx])
+    }) {
+        Some(&(_row_idx, sym)) => Some((sym, 3)),
+        None => None,
+    };
+
     SpinResult {
         reels,
-        symbols_matched: best_match.map(|row| (row[0], 3)),
+        symbols_matched,
         tier,
         payout_coins,
         is_near_miss,
         reward_tier_given: None,
         reward_note: String::new(),
+        winning_rows,
+        row_rewards,
     }
 }
 
-/// Find the highest-tier matching payline across all three rows.
-fn find_best_match(reels: &[[SlotSymbol; 3]; 3]) -> Option<[SlotSymbol; 3]> {
-    let mut best: Option<[SlotSymbol; 3]> = None;
+/// Find all matching paylines across all three rows.
+/// Returns each winning row as (row_index, first_symbol_of_match).
+fn find_all_winning_rows(reels: &[[SlotSymbol; 3]; 3]) -> Vec<(usize, SlotSymbol)> {
+    let mut wins = Vec::new();
     for row_idx in 0..3 {
         let payline = [reels[0][row_idx], reels[1][row_idx], reels[2][row_idx]];
         if check_payline(payline).is_some() {
-            match &best {
-                None => best = Some(payline),
-                Some(b) => {
-                    let current_tier = symbol_tier_order(payline[0]);
-                    let best_tier = symbol_tier_order(b[0]);
-                    if current_tier > best_tier {
-                        best = Some(payline);
-                    }
-                }
-            }
+            wins.push((row_idx, payline[0]));
         }
     }
-    best
+    wins
+}
+
+/// Find the highest-tier matching payline across all three rows.
+/// Thin wrapper around `find_all_winning_rows` for backward compatibility.
+#[allow(dead_code)]
+fn find_best_match(reels: &[[SlotSymbol; 3]; 3]) -> Option<[SlotSymbol; 3]> {
+    let wins = find_all_winning_rows(reels);
+    if wins.is_empty() {
+        return None;
+    }
+    let (best_row, _best_sym) = wins
+        .iter()
+        .max_by_key(|&&(idx, _sym)| {
+            let payline = [reels[0][idx], reels[1][idx], reels[2][idx]];
+            symbol_tier_order(payline[0])
+        })
+        .unwrap();
+    Some([reels[0][*best_row], reels[1][*best_row], reels[2][*best_row]])
+}
+
+/// Determine the highest tier from a set of winning rows.
+fn highest_tier_from_wins(reels: &[[SlotSymbol; 3]; 3], wins: &[(usize, SlotSymbol)]) -> RewardTier {
+    wins.iter()
+        .map(|(row_idx, _sym)| symbol_tier(reels[0][*row_idx]))
+        .max_by_key(|&tier| match tier {
+            RewardTier::Small => 0,
+            RewardTier::Medium => 1,
+            RewardTier::Jackpot => 2,
+            RewardTier::ExtraRoll => 4,
+            RewardTier::None => 3,
+        })
+        .unwrap_or(RewardTier::None)
+}
+
+/// Calculate total coin payout from ExtraRoll wins.
+fn calc_multi_row_payout(
+    reels: &[[SlotSymbol; 3]; 3],
+    wins: &[(usize, SlotSymbol)],
+    bet: u32,
+) -> u32 {
+    let extraroll_count = wins.iter().filter(|&&(row_idx, _sym)| {
+        symbol_tier(reels[0][row_idx]) == RewardTier::ExtraRoll
+    }).count();
+    (extraroll_count as u32) * (bet + 1)
 }
 
 /// Expected probability of rolling exactly 3 of a given display name on any single payline.
@@ -807,6 +849,8 @@ mod tests {
             is_near_miss: false,
             reward_tier_given: None,
             reward_note: String::new(),
+            winning_rows: Vec::new(),
+            row_rewards: Vec::new(),
         };
 
         let strips = generate_all_animation_strips(&result);
@@ -831,6 +875,8 @@ mod tests {
             is_near_miss: false,
             reward_tier_given: None,
             reward_note: String::new(),
+            winning_rows: Vec::new(),
+            row_rewards: Vec::new(),
         };
 
         let strips = generate_all_animation_strips(&result);
@@ -1099,5 +1145,150 @@ mod tests {
                 tier, bet, has_med, has_high, expected_coins
             );
         }
+    }
+
+    // --- Multi-row tests ---
+
+    #[test]
+    fn find_all_winning_rows_detects_all_paylines() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Low0, SlotSymbol::Mid0, SlotSymbol::High0],
+            [SlotSymbol::Low0, SlotSymbol::Mid1, SlotSymbol::High0],
+            [SlotSymbol::Low0, SlotSymbol::Mid1, SlotSymbol::High0],
+        ];
+
+        let wins = find_all_winning_rows(&reels);
+        assert_eq!(wins.len(), 3);
+        assert!(wins.contains(&(0, SlotSymbol::Low0)));
+        assert!(wins.contains(&(1, SlotSymbol::Mid0)));
+        assert!(wins.contains(&(2, SlotSymbol::High0)));
+    }
+
+    #[test]
+    fn find_all_winning_rows_returns_empty_on_no_match() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Low0, SlotSymbol::Mid0, SlotSymbol::High0],
+            [SlotSymbol::Mid0, SlotSymbol::High0, SlotSymbol::Low0],
+            [SlotSymbol::High0, SlotSymbol::Low0, SlotSymbol::Mid1],
+        ];
+
+        let wins = find_all_winning_rows(&reels);
+        assert!(wins.is_empty());
+    }
+
+    #[test]
+    fn resolve_reels_single_win_regression() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Low0, SlotSymbol::Mid0, SlotSymbol::High0],
+            [SlotSymbol::Low1, SlotSymbol::ExtraRoll0, SlotSymbol::Mid1],
+            [SlotSymbol::Low0, SlotSymbol::Low2, SlotSymbol::High0],
+        ];
+
+        let result = resolve_reels(reels, 1);
+        assert_eq!(result.tier, RewardTier::Small);
+        assert_eq!(result.winning_rows.len(), 1);
+        assert!(result.winning_rows.contains(&(0, SlotSymbol::Low0)));
+        assert_eq!(result.row_rewards.len(), 1);
+        assert_eq!(result.row_rewards[0].matched_tier, RewardTier::Small);
+        assert_eq!(result.row_rewards[0].given_tier, RewardTier::Small);
+    }
+
+    #[test]
+    fn resolve_reels_two_small_wins() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Low0, SlotSymbol::Mid0, SlotSymbol::Low2],
+            [SlotSymbol::Low0, SlotSymbol::High0, SlotSymbol::Low2],
+            [SlotSymbol::Low0, SlotSymbol::ExtraRoll0, SlotSymbol::Low2],
+        ];
+
+        let result = resolve_reels(reels, 1);
+        assert_eq!(result.tier, RewardTier::Small);
+        assert_eq!(result.winning_rows.len(), 2);
+        assert!(result.winning_rows.contains(&(0, SlotSymbol::Low0)));
+        assert!(result.winning_rows.contains(&(2, SlotSymbol::Low2)));
+        assert_eq!(result.row_rewards.len(), 2);
+    }
+
+    #[test]
+    fn resolve_reels_two_different_tier_wins() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Low0, SlotSymbol::Mid0, SlotSymbol::High0],
+            [SlotSymbol::Low0, SlotSymbol::ExtraRoll0, SlotSymbol::High0],
+            [SlotSymbol::Low0, SlotSymbol::Mid1, SlotSymbol::High0],
+        ];
+
+        let result = resolve_reels(reels, 3);
+        assert_eq!(result.tier, RewardTier::Jackpot);
+        assert_eq!(result.winning_rows.len(), 2);
+        assert_eq!(result.row_rewards.len(), 2);
+    }
+
+    #[test]
+    fn resolve_reels_extraroll_multi_row_payout() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::ExtraRoll0, SlotSymbol::Low0, SlotSymbol::Mid0],
+            [SlotSymbol::ExtraRoll0, SlotSymbol::Low1, SlotSymbol::Mid1],
+            [SlotSymbol::ExtraRoll0, SlotSymbol::High0, SlotSymbol::Low2],
+        ];
+
+        let result = resolve_reels(reels, 2);
+        assert_eq!(result.tier, RewardTier::ExtraRoll);
+        assert_eq!(result.payout_coins, 3);
+        assert_eq!(result.winning_rows.len(), 1);
+        assert!(result.row_rewards.is_empty());
+    }
+
+    #[test]
+    fn resolve_reels_extraroll_plus_small_both_resolved() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::ExtraRoll0, SlotSymbol::Mid0, SlotSymbol::Low0],
+            [SlotSymbol::ExtraRoll0, SlotSymbol::High0, SlotSymbol::Low0],
+            [SlotSymbol::ExtraRoll0, SlotSymbol::Low2, SlotSymbol::Low0],
+        ];
+
+        let result = resolve_reels(reels, 1);
+        assert_eq!(result.tier, RewardTier::ExtraRoll);
+        assert_eq!(result.payout_coins, 2);
+        assert_eq!(result.winning_rows.len(), 2);
+        assert_eq!(result.row_rewards.len(), 1);
+    }
+
+    #[test]
+    fn find_best_match_backward_compat_with_multi_row() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Low0, SlotSymbol::High0, SlotSymbol::Mid0],
+            [SlotSymbol::Low0, SlotSymbol::High0, SlotSymbol::Mid0],
+            [SlotSymbol::Low0, SlotSymbol::High0, SlotSymbol::Mid0],
+        ];
+
+        let best = find_best_match(&reels);
+        assert!(best.is_some());
+        assert_eq!(symbol_tier(best.unwrap()[0]), RewardTier::Jackpot);
+    }
+
+    #[test]
+    fn highest_tier_from_wins_returns_jackpot_when_present() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::Low0, SlotSymbol::Mid0, SlotSymbol::High0],
+            [SlotSymbol::Low0, SlotSymbol::ExtraRoll0, SlotSymbol::High0],
+            [SlotSymbol::Low0, SlotSymbol::Low2, SlotSymbol::High0],
+        ];
+
+        let wins = find_all_winning_rows(&reels);
+        let highest = highest_tier_from_wins(&reels, &wins);
+        assert_eq!(highest, RewardTier::Jackpot);
+    }
+
+    #[test]
+    fn highest_tier_from_wins_returns_extraroll_over_jackpot() {
+        let reels: [[SlotSymbol; 3]; 3] = [
+            [SlotSymbol::ExtraRoll0, SlotSymbol::High0, SlotSymbol::Low0],
+            [SlotSymbol::ExtraRoll0, SlotSymbol::High0, SlotSymbol::Low1],
+            [SlotSymbol::ExtraRoll0, SlotSymbol::High0, SlotSymbol::Low2],
+        ];
+
+        let wins = find_all_winning_rows(&reels);
+        let highest = highest_tier_from_wins(&reels, &wins);
+        assert_eq!(highest, RewardTier::ExtraRoll);
     }
 }

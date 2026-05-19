@@ -1,16 +1,8 @@
 //! Pure multi-row reward resolution logic.
 //! No RNG, no side effects — fully deterministic and testable in isolation.
 
-use crate::models::{RewardTier, SlotSymbol};
+use crate::models::{RewardTier, RowReward, SlotSymbol};
 use crate::sprites;
-
-/// Per-row resolved reward with matched tier, given tier, and fallback multiplier.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RowReward {
-    pub matched_tier: RewardTier,
-    pub given_tier: RewardTier,
-    pub multiplier: u32,
-}
 
 /// Check if a row is a 3-of-a-kind win (all three share the same display name).
 fn is_winning_row(row: [SlotSymbol; 3]) -> bool {

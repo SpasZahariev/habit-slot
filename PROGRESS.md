@@ -42,6 +42,14 @@ Next: Begin with Slice 2 (Issue #38)
 
 ---
 
+- [x] Issue #46: PRD: Multi-row winning rewards — DONE
+- [x] Issue #47: Create reward_resolution module with pure multi-row fallback logic — DONE
+- [x] Issue #48: Update SpinResult model and slot engine for multi-row wins — DONE
+
+Next: Issue #49 (Integrate multi-row rewards into execute_spin with toast aggregation)
+
+---
+
 - [x] Issue #41: PRD: Slot Reward Overhaul - Habit Rewards, Coin Refunds, Probability Tuning — DONE
 - [x] Issue #42: Slice: SpinResult types + GlobalReward selection support — DONE
 - [x] Issue #43: Slice: Core slot engine - probability recalibration + reward resolution — DONE

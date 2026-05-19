@@ -76,6 +76,10 @@ pub struct SpinResult {
     pub reward_tier_given: Option<RewardTier>,
     /// Human-readable note describing the reward (e.g. "Claimed: Coffee Break").
     pub reward_note: String,
+    /// All winning paylines as (row_index, matched_symbol).
+    pub winning_rows: Vec<(usize, SlotSymbol)>,
+    /// Per-row resolved rewards from the multi-row fallback matrix.
+    pub row_rewards: Vec<RowReward>,
 }
 
 #[derive(Debug, Clone)]
@@ -168,6 +172,14 @@ pub struct GlobalReward {
 pub struct ClaimedReward {
     pub name: String,
     pub tier: GlobalRewardTier,
+}
+
+/// Per-row resolved reward with matched tier, given tier, and fallback multiplier.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RowReward {
+    pub matched_tier: RewardTier,
+    pub given_tier: RewardTier,
+    pub multiplier: u32,
 }
 
 /// Toast notification message displayed at top-center of screen.
@@ -304,9 +316,13 @@ mod toast_tests {
             is_near_miss: false,
             reward_tier_given: None,
             reward_note: String::new(),
+            winning_rows: Vec::new(),
+            row_rewards: Vec::new(),
         };
         assert!(result.reward_tier_given.is_none());
         assert_eq!(result.reward_note, "");
+        assert!(result.winning_rows.is_empty());
+        assert!(result.row_rewards.is_empty());
     }
 
     #[test]
@@ -319,8 +335,16 @@ mod toast_tests {
             is_near_miss: false,
             reward_tier_given: Some(RewardTier::Small),
             reward_note: "Claimed: Coffee Break".to_string(),
+            winning_rows: vec![(0, SlotSymbol::Low0)],
+            row_rewards: vec![RowReward {
+                matched_tier: RewardTier::Small,
+                given_tier: RewardTier::Small,
+                multiplier: 1,
+            }],
         };
         assert_eq!(result.reward_tier_given, Some(RewardTier::Small));
         assert_eq!(result.reward_note, "Claimed: Coffee Break");
+        assert_eq!(result.winning_rows.len(), 1);
+        assert_eq!(result.row_rewards.len(), 1);
     }
 }
