@@ -23,6 +23,8 @@ pub fn HabitList() -> Element {
             div {
                 class: "empty-state text-center px-4 py-12 opacity-70 text-[#f0e6ff]",
                 p { "No habits yet. Tap 'Add Habit' to create one." }
+                br {}
+                p { "You can edit and delete habits by clicking on their card." }
             }
         } else {
             ul {
@@ -64,7 +66,7 @@ pub fn HabitRow(habit: Habit) -> Element {
                     class: "flex items-center gap-2 font-pixel flex-1 min-w-0",
 
                     span {
-                        style: "color: #00f5d4; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;",
+                        style: "color: #00f5d4; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 12ch;",
                         "{&habit.name}"
                     }
 

@@ -22,7 +22,7 @@ pub fn HabitDetailPage(habit_id: String) -> Element {
         rsx! {
             div {
                 class: "habit-detail-page w-full max-w-[420px] mx-auto",
-                style: "padding: 16px; padding-bottom: 32px;",
+                style: "padding: 8px 16px 32px 16px;",
 
                 div {
                     style: "background: #2a1a4e; border-radius: 12px; padding: 20px; margin-bottom: 12px; border: 1px solid rgba(255,45,120,0.2);",
