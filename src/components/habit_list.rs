@@ -96,8 +96,8 @@ pub fn HabitRow(habit: Habit) -> Element {
                 onclick: move |e| {
                     e.stop_propagation();
                     app_state.with_mut(|s| {
-                        s.increment_habit_completion(habit_id);
-                        s.push_toast("✓ Habit ticked".to_string(), 1);
+                        let payout = s.increment_habit_completion(habit_id);
+                        s.push_toast("✓ Habit ticked".to_string(), payout);
                     });
                     *pulsing.write() = true;
                     spawn(async move {

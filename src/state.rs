@@ -233,7 +233,7 @@ impl AppState {
     }
 
     /// Increment completion for a habit today. Always additive, no toggle/undo.
-    pub fn increment_habit_completion(&mut self, habit_id: Uuid) {
+    pub fn increment_habit_completion(&mut self, habit_id: Uuid) -> u32 {
         let today = chrono::Utc::now().naive_utc().date();
 
         // Find existing completion for today or create new one
@@ -318,6 +318,8 @@ impl AppState {
             #[cfg(feature = "db")]
             self.persist_milestone_tracker(habit_id);
         }
+
+        habit_coin_reward
     }
 
     /// Get today's completion count for a habit.
