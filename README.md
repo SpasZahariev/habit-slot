@@ -172,3 +172,16 @@ cargo test
 ```
 
 Each business logic module (slot engine, economy, streaks, rewards) has parameterized tests verifying probability distributions, edge cases, and invariant properties.
+
+---
+
+## Android Installation
+
+Download the latest `.apk` from [GitHub Releases](https://github.com/SpasZahariev/habit-slot/releases).
+
+1. Download the `habit-slot.apk` file from the releases page
+2. Open the downloaded file on your Android device
+3. If prompted, allow "Install unknown apps" for your file browser in Settings
+4. Tap **Install** and confirm
+
+The app works fully offline — no account or internet connection required.
